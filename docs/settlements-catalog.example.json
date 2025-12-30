@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "zones": [
+    {
+      "zone": "Sandsquall Desert",
+      "settlements": ["Aithanahr", "Azmaran", "Djinna", "Squall's End", "Sunhaven"]
+    },
+    {
+      "zone": "The Jundark",
+      "settlements": ["Arisalon", "Hecribba", "Mythbreak", "Tangled Post", "Vinebreach", "Wildport"]
+    },
+    {
+      "zone": "The Turquoise Sea",
+      "settlements": ["Brinebarrel", "Korrin", "Seahook", "Shorefoot", "Windansea"]
+    },
+    {
+      "zone": "The Anvils",
+      "settlements": ["Dhurgrum", "Duunhold", "Kal Torhum", "Vexhelm", "Vhalgadim"]
+    },
+    {
+      "zone": "Riverlands",
+      "settlements": ["Halcyon", "Joeva", "Miraleth", "New Aela", "Winstead"]
+    }
+  ]
+}
