@@ -11,28 +11,37 @@ This repository is published primarily for transparency and trust. Most communit
 ## What it's for
 If your Discord server wants structure around settlements (who's mayor, who are citizens, where to post announcements, and when wars/elections happen), VerraVoice gives you:
 - A settlement registry per server (your server's data is separate from other servers)
-- Standardized channels/roles created by the bot so you don't have to build the structure manually
-- Moderated "mayor claim" verification (with approve/deny buttons)
-- Reminders and announcements for time-based events (wars, elections, schedules)
+- Standardized channels/roles created by the bot so you don't have to build or police the structure manually
+- Moderated "mayor claim" verification (with approve/deny buttons instead of DMs/spreadsheets)
+- Automated reminders/announcements for time-based events (wars, elections, schedules)
+- Guild-role workflows so leaders/officers can manage their own roles and invites safely
+
+## Why different roles love it
+- Guildless / new player: clear rules + self-assign in one place; see what settlements and guilds exist without pinging staff.
+- Citizens: up-to-date settlement cards and announcements; pick/read the right channels and roles instantly.
+- Guild leaders/officers: request leadership roles, manage your guild role in `#guild-controls`, and invite members with `/ginvite` (no manual role hunting).
+- Mayors: one-click verification flow; settlement cards and overview embeds stay current without you editing anything.
+- Moderators/admins: fewer tickets/DMs. Approve/deny with buttons, let the bot create/repair channels/roles, and rely on scheduled reminders instead of manual pings.
 
 ## What the bot does (features)
-- Auto-creates settlement channels + roles (mayor/citizen/view)
-- Enforces **one mayor per settlement**
-- Mayor claim workflow:
-  - Users submit a claim + proof (proof is collected via DM)
-  - Staff approve/deny with buttons in a private review channel
-- Bot-managed embeds auto-update:
-  - Per-settlement status card
-  - Server overview (`#server-overview`)
-- Guild roles with controlled invites (`/ginvite`) and management buttons for leaders/officers
-- Self-assign panel for users:
-  - Settlement citizenship (one settlement at a time)
-  - Optional read-only "view" roles
-  - Guild Leader / Guild Officer role requests (with staff approval)
-- Scheduled reminders:
-  - Elections
-  - Wars / sieges
-  - Generic reminders
+- Settlement structure in minutes  
+  - Auto-creates categories, channels, and roles per settlement (mayor/citizen/view) plus zone-level channels.  
+  - Enforces **one mayor per settlement** and keeps per-settlement status cards updated.  
+  - Global `#server-overview` stays fresh automatically.
+- Mayor verification without spreadsheets  
+  - Users submit a claim + proof (proof via DM).  
+  - Staff approve/deny with buttons; approvals update roles, status cards, and overview automatically.
+- Self-serve onboarding for everyone  
+  - `#self-assign` buttons for citizenship, view roles, and Guild Leader/Officer requests.  
+  - Guild leaders/officers use `/ginvite` to give their guild role to members (no manual role hunting).
+- Guild management tools  
+  - `#guild-controls` (leaders/officers only) with an embed + buttons to rename or delete their guild role; `/ginvite` instructions included.
+- Scheduled comms, zero manual pinging  
+  - Elections, wars/sieges, and generic reminders with scheduled posts and optional role pings.
+- Moderation time-savers  
+  - Private requests channel for reviews; buttons finalize decisions.  
+  - Bot ensures it can post in managed channels and keeps message pins/embeds fresh.  
+  - Safe “regular install” reconciles existing channels/roles without deleting history.
 
 ## Before you install (important)
 1. **Bot role position**
