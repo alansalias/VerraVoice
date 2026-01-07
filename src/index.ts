@@ -17,6 +17,7 @@ import { allSettlementMayorRoleIds, getOrCreateMayorAggregateRoleId, syncMayorAg
 import { handleMayorClaimButtons, handleMayorClaimModal } from "./discord/interactions/mayorClaim";
 import { handleMayorProofDmMessage } from "./discord/dm/mayorProof";
 import { handleMayorDashboardButtons, handleMayorDashboardMenus, handleMayorDashboardModal } from "./discord/interactions/mayorDashboard";
+import { handleGuildRoleButtons, handleGuildRoleModals } from "./discord/guildRoles";
 
 const config = loadConfig(process.env);
 const logger = new Logger("info");
@@ -53,6 +54,7 @@ async function main() {
         await handleRoleRequestButtons({ interaction, store, logger });
         await handleMayorClaimButtons({ interaction, store, logger });
         await handleMayorDashboardButtons({ interaction, store, logger });
+        await handleGuildRoleButtons({ interaction, store });
         return;
       }
       if (interaction.isStringSelectMenu()) {
@@ -64,6 +66,7 @@ async function main() {
         await handleRoleRequestModal({ interaction, store, logger });
         await handleMayorClaimModal({ interaction, store, logger });
         await handleMayorDashboardModal({ interaction, store, logger });
+        await handleGuildRoleModals({ interaction, store });
         return;
       }
       if (!interaction.isChatInputCommand()) return;

@@ -284,6 +284,10 @@ export async function populateFromCatalog(opts: {
         adminChatChannelId: null,
         moderatorChatChannelId: null,
         allMayorsChannelId: null,
+        guildLeaderRoleId: null,
+        guildOfficerRoleId: null,
+        guildManagementChannelId: null,
+        guildManagementMessageId: null,
         guildLeadershipChannelId: null,
         infoCategoryId: null,
         generalCategoryId: null,
@@ -302,6 +306,7 @@ export async function populateFromCatalog(opts: {
       },
       settlements: {},
       mayorRequests: {},
+      guildRoles: {},
       roleRequests: {},
       schedule: {},
     };

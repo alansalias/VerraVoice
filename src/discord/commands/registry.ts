@@ -1,7 +1,8 @@
-import { RESTPostAPIApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
+import { PermissionFlagsBits, RESTPostAPIApplicationCommandsJSONBody, SlashCommandBuilder } from "discord.js";
 import { handleElection } from "./election";
 import { handleMayor } from "./mayor";
 import { handleSchedule } from "./schedule";
+import { handleGuildInvite } from "./ginvite";
 import { handleSettlement } from "./settlement";
 import { handleSetup } from "./setup";
 import { CommandHandler } from "./types";
@@ -16,15 +17,23 @@ export type RegisteredCommand = {
 export function allCommands(): RegisteredCommand[] {
   const setup = new SlashCommandBuilder()
     .setName("setup")
-    .setDescription("Initialize bot channels/categories for this server")
+    .setDescription("Install/repair VerraVoice channels/categories/roles")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand((s) =>
       s
         .setName("init")
-        .setDescription("Create bot-managed categories/channels")
+        .setDescription("Create/repair VerraVoice structure (safe; does not delete channels)")
         .addBooleanOption((o) =>
           o
             .setName("clean_install")
-            .setDescription("DANGER: delete existing channels/roles first (best-effort)")
+            .setDescription("DESTRUCTIVE: delete ALL channels + most roles first (requires confirmation)")
+            .setRequired(false),
+        )
+        .addStringOption((o) =>
+          o
+            .setName("confirm_clean_install")
+            .setDescription("Required when clean_install is enabled")
+            .addChoices({ name: "DELETE", value: "DELETE" })
             .setRequired(false),
         ),
     )
@@ -43,6 +52,7 @@ export function allCommands(): RegisteredCommand[] {
   const settlement = new SlashCommandBuilder()
     .setName("settlement")
     .setDescription("Manage settlements and their status cards")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand((s) =>
       s
         .setName("add")
@@ -131,6 +141,7 @@ export function allCommands(): RegisteredCommand[] {
   const election = new SlashCommandBuilder()
     .setName("election")
     .setDescription("Election schedule + reminders")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand((s) =>
       s
         .setName("set")
@@ -165,6 +176,7 @@ export function allCommands(): RegisteredCommand[] {
   const war = new SlashCommandBuilder()
     .setName("war")
     .setDescription("Declare settlement wars (scheduled reminders)")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand((s) =>
       s
         .setName("declare")
@@ -190,6 +202,7 @@ export function allCommands(): RegisteredCommand[] {
   const schedule = new SlashCommandBuilder()
     .setName("schedule")
     .setDescription("Create generic scheduled reminders")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand((s) =>
       s
         .setName("create")
@@ -217,6 +230,13 @@ export function allCommands(): RegisteredCommand[] {
         .addStringOption((o) => o.setName("id").setDescription("Schedule id").setRequired(true)),
     );
 
+  const ginvite = new SlashCommandBuilder()
+    .setName("ginvite")
+    .setDescription("Give your guild role to a member")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
+    .addUserOption((o) => o.setName("user").setDescription("Member to add to your guild").setRequired(true))
+    .addStringOption((o) => o.setName("guild").setDescription("Guild name (required if you lead multiple guilds)"));
+
   return [
     { name: "setup", json: setup.toJSON(), handler: handleSetup },
     { name: "settlement", json: settlement.toJSON(), handler: handleSettlement },
@@ -224,6 +244,7 @@ export function allCommands(): RegisteredCommand[] {
     { name: "election", json: election.toJSON(), handler: handleElection },
     { name: "war", json: war.toJSON(), handler: handleWar },
     { name: "schedule", json: schedule.toJSON(), handler: handleSchedule },
+    { name: "ginvite", json: ginvite.toJSON(), handler: handleGuildInvite },
   ];
 }
 

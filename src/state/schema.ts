@@ -16,6 +16,10 @@ export const GuildConfigSchema = z.object({
   adminChatChannelId: z.string().min(1).nullable().default(null),
   moderatorChatChannelId: z.string().min(1).nullable().default(null),
   allMayorsChannelId: z.string().min(1).nullable().default(null),
+  guildLeaderRoleId: z.string().min(1).nullable().default(null),
+  guildOfficerRoleId: z.string().min(1).nullable().default(null),
+  guildManagementChannelId: z.string().min(1).nullable().default(null),
+  guildManagementMessageId: z.string().min(1).nullable().default(null),
   guildLeadershipChannelId: z.string().min(1).nullable().default(null),
   infoCategoryId: z.string().min(1).nullable().default(null),
   generalCategoryId: z.string().min(1).nullable().default(null),
@@ -33,6 +37,15 @@ export const GuildConfigSchema = z.object({
   zoneViewRoleIds: z.record(z.string(), z.string()).default({}),
 });
 export type GuildConfig = z.infer<typeof GuildConfigSchema>;
+
+export const ServerGuildSchema = z.object({
+  roleId: z.string().min(1),
+  name: z.string().min(1),
+  createdByUserId: z.string().min(1),
+  createdAtMs: z.number().int(),
+  renamedAtMs: z.number().int().nullable().default(null),
+});
+export type ServerGuild = z.infer<typeof ServerGuildSchema>;
 
 export const ElectionConfigSchema = z.object({
   registrationStartMs: z.number().int().nullable().default(null),
@@ -133,6 +146,10 @@ export const GuildStateSchema = z.object({
     adminChatChannelId: null,
     moderatorChatChannelId: null,
     allMayorsChannelId: null,
+    guildLeaderRoleId: null,
+    guildOfficerRoleId: null,
+    guildManagementChannelId: null,
+    guildManagementMessageId: null,
     guildLeadershipChannelId: null,
     infoCategoryId: null,
     generalCategoryId: null,
@@ -152,6 +169,7 @@ export const GuildStateSchema = z.object({
   settlements: z.record(z.string(), SettlementSchema).default({}),
   mayorRequests: z.record(z.string(), MayorRequestSchema).default({}),
   roleRequests: z.record(z.string(), RoleRequestSchema).default({}),
+  guildRoles: z.record(z.string(), ServerGuildSchema).default({}),
   schedule: z.record(z.string(), ScheduleItemSchema).default({}),
 });
 export type GuildState = z.infer<typeof GuildStateSchema>;

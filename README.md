@@ -24,6 +24,7 @@ If your Discord server wants structure around settlements (who's mayor, who are 
 - Bot-managed embeds auto-update:
   - Per-settlement status card
   - Server overview (`#server-overview`)
+- Guild roles with controlled invites (`/ginvite`) and management buttons for leaders/officers
 - Self-assign panel for users:
   - Settlement citizenship (one settlement at a time)
   - Optional read-only "view" roles
@@ -39,7 +40,9 @@ If your Discord server wants structure around settlements (who's mayor, who are 
 2. **Discord permissions**
    - The bot needs `Manage Channels`, `Manage Roles`, `Send Messages`, `Embed Links`, `Read Message History`.
 3. **Clean install is destructive**
-   - `/setup init clean_install:true` attempts to delete existing channels/roles (best-effort). Use only on a fresh test server unless you're sure you want that behavior.
+   - Clean install best-effort deletes **ALL channels** (which permanently deletes chat history) and **most roles** before setting up VerraVoice.
+   - To run it you must explicitly confirm: `/setup init clean_install:true confirm_clean_install:DELETE`
+   - For existing servers, prefer the default `/setup init` (regular install): it does **not** delete channels, and will create/move/update channels by name.
 
 ## Quick start (server admin)
 1. Invite the bot (link above).
@@ -58,6 +61,7 @@ If your Discord server wants structure around settlements (who's mayor, who are 
 - `/setup populate`: Creates settlement structure from the built-in catalog.
 - `/settlement add|list|info|set-tier|update|announce|destroyed`: Manage settlements and announcements.
 - `/mayor claim|approve|deny|assign|clear`: Mayor verification workflow and moderation actions.
+- `/ginvite`: Guild leaders/officers can give their guild role to a member (must hold that guild role).
 - `/election set|clear|trigger-ue`: Election scheduling and reminders.
 - `/war declare`: War/siege reminders.
 - `/schedule create|list|cancel`: Generic scheduled reminders.
@@ -67,6 +71,7 @@ VerraVoice creates bot-managed categories/channels/roles to support the workflow
 - Public info + onboarding (rules/self-assign/mayor guides/overview)
 - Settlement organization (settlement channels by zone + settlement updates)
 - Staff review (a private requests channel with approve/deny buttons)
+- Guild leader/officer tools (`#guild-controls` for rename/delete + `/ginvite` instructions)
 
 Notes:
 - Discord forces text channel names to be lowercase and hyphenated (so `Squall's End` becomes `#squalls-end`).
@@ -110,4 +115,3 @@ Who can review claims/requests:
 This repo exists so communities can audit changes and understand what the hosted bot does. Self-hosting is not a supported path for typical server admins.
 
 - Technical docs: `docs/ashes-discord-bot.md`
-

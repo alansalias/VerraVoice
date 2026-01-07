@@ -15,6 +15,7 @@ import { upsertGuildOverview } from "../overview";
 import { ensureMayorAggregateRole } from "../mayorAggregate";
 import { mayorClaimComponents } from "../interactions/mayorClaim";
 import { mayorDashboardComponents } from "../interactions/mayorDashboard";
+import { upsertGuildControlsPanel } from "../guildRoles";
 
 function discordApiErrorCode(err: unknown): number | null {
   if (!err || typeof err !== "object") return null;
@@ -64,7 +65,10 @@ async function ensureCategory(opts: {
     guild.channels.cache.find(
       (c) => c.type === ChannelType.GuildCategory && c.name.toLowerCase() === desiredName.toLowerCase(),
     ) ?? null;
-  if (byName) return byName.id;
+  if (byName) {
+    await byName.edit({ name: desiredName }).catch(() => null);
+    return byName.id;
+  }
   const created = await guild.channels.create({ name: desiredName, type: ChannelType.GuildCategory });
   return created.id;
 }
@@ -78,6 +82,9 @@ async function ensureRole(opts: {
   const { guild, desiredName, permissions, hoist } = opts;
   const existing = guild.roles.cache.find((r) => r.name.toLowerCase() === desiredName.toLowerCase()) ?? null;
   if (existing) {
+    if (existing.name !== desiredName) {
+      await existing.setName(desiredName, "VerraVoice: ensure role name").catch(() => null);
+    }
     if (existing.mentionable) {
       await existing.setMentionable(false, "VerraVoice: lock down role pings").catch(() => null);
     }
@@ -104,14 +111,25 @@ async function ensureTextChannel(opts: {
 }) {
   const { guild, desiredName, existingId, parentId, topic, permissionOverwrites, rateLimitPerUser } = opts;
   const byId = existingId ? await guild.channels.fetch(existingId).catch(() => null) : null;
-  const byName =
-    guild.channels.cache.find(
-      (c) =>
-        c.type === ChannelType.GuildText &&
-        c.name.toLowerCase() === desiredName.toLowerCase() &&
-        (!parentId || c.parentId === parentId),
-    ) ?? null;
-  const resolved = (byId && byId.type === ChannelType.GuildText ? byId : null) ?? (byName && byName.type === ChannelType.GuildText ? byName : null);
+  const desiredLower = desiredName.toLowerCase();
+
+  const desiredParentId = parentId ?? null;
+  const nameMatches = Array.from(guild.channels.cache.values()).filter(
+    (c): c is TextChannel => c.type === ChannelType.GuildText && c.name.toLowerCase() === desiredLower,
+  );
+  const pickByName = (() => {
+    if (nameMatches.length === 0) return null;
+    const inDesiredParent = nameMatches.find((c) => c.parentId === desiredParentId) ?? null;
+    if (inDesiredParent) return inDesiredParent;
+    if (nameMatches.length === 1) return nameMatches[0];
+    if (desiredParentId !== null) {
+      const rootLevel = nameMatches.find((c) => c.parentId === null) ?? null;
+      if (rootLevel) return rootLevel;
+    }
+    return null;
+  })();
+
+  const resolved = (byId && byId.type === ChannelType.GuildText ? byId : null) ?? pickByName;
 
   if (resolved && resolved.type === ChannelType.GuildText) {
     await resolved
@@ -148,16 +166,25 @@ async function ensureForumChannel(opts: {
 }) {
   const { guild, desiredName, existingId, parentId, topic } = opts;
   const byId = existingId ? await guild.channels.fetch(existingId).catch(() => null) : null;
-  const byNameInParent =
-    guild.channels.cache.find(
-      (c) =>
-        c.type === ChannelType.GuildForum &&
-        c.name.toLowerCase() === desiredName.toLowerCase() &&
-        (!parentId || c.parentId === parentId),
-    ) ?? null;
-  const channel =
-    (byId && byId.type === ChannelType.GuildForum ? byId : null) ??
-    (byNameInParent && byNameInParent.type === ChannelType.GuildForum ? byNameInParent : null);
+
+  const desiredLower = desiredName.toLowerCase();
+  const desiredParentId = parentId ?? null;
+  const nameMatches = Array.from(guild.channels.cache.values()).filter(
+    (c): c is import("discord.js").ForumChannel => c.type === ChannelType.GuildForum && c.name.toLowerCase() === desiredLower,
+  );
+  const pickByName = (() => {
+    if (nameMatches.length === 0) return null;
+    const inDesiredParent = nameMatches.find((c) => c.parentId === desiredParentId) ?? null;
+    if (inDesiredParent) return inDesiredParent;
+    if (nameMatches.length === 1) return nameMatches[0];
+    if (desiredParentId !== null) {
+      const rootLevel = nameMatches.find((c) => c.parentId === null) ?? null;
+      if (rootLevel) return rootLevel;
+    }
+    return null;
+  })();
+
+  const channel = (byId && byId.type === ChannelType.GuildForum ? byId : null) ?? pickByName;
   if (channel && channel.type === ChannelType.GuildForum) {
     await channel
       .edit({
@@ -369,6 +396,10 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
           adminChatChannelId: null,
           moderatorChatChannelId: null,
           allMayorsChannelId: null,
+          guildLeaderRoleId: null,
+          guildOfficerRoleId: null,
+          guildManagementChannelId: null,
+          guildManagementMessageId: null,
           guildLeadershipChannelId: null,
           infoCategoryId: null,
           generalCategoryId: null,
@@ -387,6 +418,7 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
         },
         settlements: {},
         mayorRequests: {},
+        guildRoles: {},
         roleRequests: {},
         schedule: {},
       });
@@ -399,6 +431,22 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
   if (sub !== "init" && sub !== "populate") return;
 
   const cleanInstall = sub === "init" ? (interaction.options.getBoolean("clean_install") ?? false) : false;
+  const cleanInstallConfirm = sub === "init" ? (interaction.options.getString("confirm_clean_install") ?? null) : null;
+  if (cleanInstall && cleanInstallConfirm !== "DELETE") {
+    const content =
+      "Clean install is **DESTRUCTIVE**: it best-effort deletes **ALL channels** (which permanently deletes chat history) and **most roles** before setting up VerraVoice.\n\n" +
+      "To proceed, rerun `/setup init` with:\n" +
+      "- `clean_install: true`\n" +
+      "- `confirm_clean_install: DELETE`\n\n" +
+      "If you want a non-destructive install that reuses/moves existing channels by name, run `/setup init` without `clean_install`.";
+
+    if (canReply && shouldDefer) {
+      await interaction.editReply({ content }).catch(() => null);
+      return;
+    }
+    await interaction.reply({ content, flags: MessageFlags.Ephemeral }).catch(() => null);
+    return;
+  }
   if (cleanInstall) {
     await cleanInstallGuild({ guild, botId, keepChannelId: interaction.channelId });
     await store.update(async (state) => {
@@ -416,6 +464,10 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
           adminChatChannelId: null,
           moderatorChatChannelId: null,
           allMayorsChannelId: null,
+          guildLeaderRoleId: null,
+          guildOfficerRoleId: null,
+          guildManagementChannelId: null,
+          guildManagementMessageId: null,
           guildLeadershipChannelId: null,
           infoCategoryId: null,
           generalCategoryId: null,
@@ -434,6 +486,7 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
         },
         settlements: {},
         mayorRequests: {},
+        guildRoles: {},
         roleRequests: {},
         schedule: {},
       };
@@ -454,6 +507,10 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
           adminChatChannelId: null,
           moderatorChatChannelId: null,
           allMayorsChannelId: null,
+          guildLeaderRoleId: null,
+          guildOfficerRoleId: null,
+          guildManagementChannelId: null,
+          guildManagementMessageId: null,
           guildLeadershipChannelId: null,
           infoCategoryId: null,
           generalCategoryId: null,
@@ -472,6 +529,7 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
         },
         settlements: {},
         mayorRequests: {},
+        guildRoles: {},
         roleRequests: {},
         schedule: {},
       };
@@ -888,6 +946,62 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
     ],
   });
 
+  const guildManagementChannelId = await ensureTextChannel({
+    guild,
+    desiredName: "guild-controls",
+    existingId: existingConfig?.guildManagementChannelId,
+    parentId: generalCategoryId,
+    topic: "Guild leader/officer tools: rename/delete guild role, see /ginvite usage.",
+    permissionOverwrites: [
+      { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.MentionEveryone] },
+      ...(guildLeaderRoleId
+        ? [
+            {
+              id: guildLeaderRoleId,
+              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory],
+              deny: [PermissionFlagsBits.MentionEveryone],
+            },
+          ]
+        : []),
+      ...(guildOfficerRoleId
+        ? [
+            {
+              id: guildOfficerRoleId,
+              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory],
+              deny: [PermissionFlagsBits.MentionEveryone],
+            },
+          ]
+        : []),
+      ...(adminRoleId
+        ? [
+            {
+              id: adminRoleId,
+              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory],
+            },
+          ]
+        : []),
+      ...(moderatorRoleId
+        ? [
+            {
+              id: moderatorRoleId,
+              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory],
+              deny: [PermissionFlagsBits.MentionEveryone],
+            },
+          ]
+        : []),
+      {
+        id: botId,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.EmbedLinks,
+          PermissionFlagsBits.ReadMessageHistory,
+          PermissionFlagsBits.MentionEveryone,
+        ],
+      },
+    ],
+  });
+
   await store.update(async (state) => {
     const g = state.guilds[guild.id];
     if (!g) return;
@@ -899,12 +1013,15 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
     g.config.adminRoleId = adminRoleId;
     g.config.moderatorRoleId = moderatorRoleId;
     g.config.mayorAggregateRoleId = mayorAggregateRoleId;
+    g.config.guildLeaderRoleId = guildLeaderRoleId;
+    g.config.guildOfficerRoleId = guildOfficerRoleId;
     g.config.mayorInfoChannelId = mayorInfoChannelId;
     g.config.mayorHowToChannelId = mayorHowToChannelId;
     g.config.adminChatChannelId = adminChatChannelId;
     g.config.moderatorChatChannelId = moderatorChatChannelId;
     g.config.allMayorsChannelId = allMayorsChannelId;
     g.config.guildLeadershipChannelId = guildLeadershipChannelId;
+    g.config.guildManagementChannelId = guildManagementChannelId;
     g.config.overviewChannelId = overviewChannelId;
     g.config.requestsChannelId = requestsChannelId;
     g.config.serverAnnouncementsChannelId = serverAnnouncementsChannelId;
@@ -919,6 +1036,7 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
     s?.moderatorChatChannelId,
     s?.allMayorsChannelId,
     s?.guildLeadershipChannelId,
+    s?.guildManagementChannelId,
     s?.overviewChannelId,
     s?.mayorInfoChannelId,
     s?.mayorHowToChannelId,
@@ -934,6 +1052,7 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
   await upsertMayorInfo({ guild, store });
   await upsertRules({ guild, store });
   await upsertMayorHowTo({ guild, store });
+  await upsertGuildControlsPanel({ guild, store });
 
   const dataDir = path.resolve(config.DATA_DIR ?? "data");
   const catalog = await loadSettlementCatalog(dataDir);
@@ -941,9 +1060,13 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
   await upsertSelfAssignPanel(guild, store);
   await upsertGuildOverview(guild, store);
 
+  const replyHeader = cleanInstall
+    ? "Setup complete (clean install).\n- Note: clean install deletes channels/roles best-effort and is irreversible."
+    : "Setup complete (regular install).\n- Note: regular install does not delete channels; it creates missing ones and can move/update existing ones by name.";
+
   const replyContent = s
-    ? `Setup complete.\n- VerraVoice: <#${s.settlementsCategoryId}>\n- Mayor info: <#${s.mayorInfoChannelId}>\n- Overview: <#${s.overviewChannelId}>\n- Settlement updates: <#${s.announcementsChannelId}>\n- Mod requests: <#${s.requestsChannelId}>\n- Info: <#${s.infoCategoryId}>\n- Rules: <#${s.rulesChannelId}>\n- Self-assign: <#${s.selfAssignChannelId}>\n- General: <#${s.generalCategoryId}>\n- Timezone: **${s.timezone}**`
-    : "Setup complete.";
+    ? `${replyHeader}\n- VerraVoice: <#${s.settlementsCategoryId}>\n- Mayor info: <#${s.mayorInfoChannelId}>\n- Overview: <#${s.overviewChannelId}>\n- Settlement updates: <#${s.announcementsChannelId}>\n- Mod requests: <#${s.requestsChannelId}>\n- Info: <#${s.infoCategoryId}>\n- Rules: <#${s.rulesChannelId}>\n- Self-assign: <#${s.selfAssignChannelId}>\n- Guild controls: <#${s.guildManagementChannelId}>\n- General: <#${s.generalCategoryId}>\n- Timezone: **${s.timezone}**`
+    : replyHeader;
 
   // Respond before deleting the channel the command was run from (otherwise Discord can return "Unknown Message").
   if (canReply) {

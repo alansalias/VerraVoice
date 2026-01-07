@@ -18,7 +18,8 @@ This bot is aimed at **community server management** (not guild systems). It hel
 
 ## MVP workflow
 1. Admin runs `/setup init` to create bot-managed categories/channels.
-   - Optional: enable `clean_install` to delete existing channels/roles first (best-effort).
+   - Default (regular install) is non-destructive: it creates missing channels/roles and can move/update existing ones by name.
+   - Optional: enable `clean_install` to wipe the server first (best-effort deletes **all channels** + **most roles**). Requires confirmation: `confirm_clean_install: DELETE`.
 2. Players read `#mayor-requests` for the verification process.
 3. Players start a claim via the `#mayor-requests` **Start Mayor Claim** button (form), then upload proof via DM.
 4. Moderators review requests in the private `#requests` channel (under `VerraVoice - Moderation`) and approve/deny via buttons.
@@ -39,6 +40,7 @@ This bot is aimed at **community server management** (not guild systems). It hel
 - `/setup init|timezone|populate`
 - `/settlement add|list|set-tier|update|info|announce|destroyed`
 - `/mayor claim|approve|deny|assign|clear`
+- `/ginvite` (guild leaders/officers give their guild role to members)
 - `/election set|clear|trigger-ue`
 - `/schedule create|list|cancel` (generic scheduled reminders)
 - `/war declare` (attacker + defender)
@@ -52,6 +54,7 @@ This bot is aimed at **community server management** (not guild systems). It hel
 - `Info` (category): `#server-announcements`, `#rules`, `#self-assign`
 - `General` (category): forums + chat channels
 - `General` (category): `#guild-leadership` (guild leaders/officers only)
+- `General` (category): `#guild-controls` (leaders/officers) with an embed + buttons (rename/delete guild role) and `/ginvite` instructions
 - One category per zone + settlement channels from the built-in catalog
 
 ## Timezones and date input

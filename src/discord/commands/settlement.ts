@@ -89,6 +89,10 @@ export const handleSettlement: CommandHandler = async ({ interaction, store }) =
           adminChatChannelId: null,
           moderatorChatChannelId: null,
           allMayorsChannelId: null,
+          guildLeaderRoleId: null,
+          guildOfficerRoleId: null,
+          guildManagementChannelId: null,
+          guildManagementMessageId: null,
           guildLeadershipChannelId: null,
           infoCategoryId: null,
           generalCategoryId: null,
@@ -107,6 +111,7 @@ export const handleSettlement: CommandHandler = async ({ interaction, store }) =
         },
         settlements: {},
         mayorRequests: {},
+        guildRoles: {},
         roleRequests: {},
         schedule: {},
       });

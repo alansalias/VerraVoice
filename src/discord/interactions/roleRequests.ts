@@ -14,6 +14,7 @@ import {
 } from "discord.js";
 import { MessageFlags } from "discord-api-types/v10";
 import { Logger } from "../../logger";
+import { ensureGuildRoleForName } from "../guildRoles";
 import { RoleRequest } from "../../state/schema";
 import { StateStore } from "../../state/store";
 import { newId } from "../../utils/ids";
@@ -159,6 +160,25 @@ export async function handleRoleRequestButtons(opts: {
   const member = await interaction.guild.members.fetch(req.requesterUserId).catch(() => null);
   if (member) await member.roles.add(role.id).catch(() => null);
 
+  let guildRoleId: string | null = null;
+  if (req.guildName) {
+    try {
+      const ensured = await ensureGuildRoleForName({
+        guild: interaction.guild,
+        store,
+        name: req.guildName,
+        requestedByUserId: req.requesterUserId,
+      });
+      guildRoleId = ensured.roleId;
+    } catch {
+      // fall through; handled below
+    }
+  }
+
+  if (member && guildRoleId) {
+    await member.roles.add(guildRoleId).catch(() => null);
+  }
+
   await store.update(async (state) => {
     const r = state.guilds[interaction.guildId]?.roleRequests?.[requestId];
     if (!r) return;
@@ -172,6 +192,18 @@ export async function handleRoleRequestButtons(opts: {
     components: [disabledReviewButtons(requestId)],
     allowedMentions: { parse: [] },
   });
+
+  if (guildRoleId && !member) {
+    await interaction.followUp({
+      content: `Guild role created: <@&${guildRoleId}> (assign it manually to <@${req.requesterUserId}>; user not in server).`,
+      flags: MessageFlags.Ephemeral,
+    });
+  } else if (req.guildName && !guildRoleId) {
+    await interaction.followUp({
+      content: `Warning: could not create/find the guild role for **${req.guildName}**. Check bot permissions and try again.`,
+      flags: MessageFlags.Ephemeral,
+    });
+  }
 }
 
 export async function handleRoleRequestModal(opts: {
