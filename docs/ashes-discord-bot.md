@@ -3,8 +3,9 @@
 This bot is aimed at **community server management** (not guild systems). It helps admins/mods and settlement leadership keep citizens informed:
 - Which settlements exist and what **tier** they are (0-5)
 - Who is the current **mayor** (tier 3+)
-- Election schedules + reminders (scheduled and unscheduled)
+- Election schedules and reminders (scheduled and unscheduled)
 - Settlement status: buildings, buy orders, notes, war declarations
+- Guild role management with safe self-serve invites
 
 ## Core concepts
 - **Discord guild** = one community server.
@@ -16,7 +17,7 @@ This bot is aimed at **community server management** (not guild systems). It hel
   - Unscheduled elections are 24h registration + 24h voting.
   - Elections can be out of sync; the bot supports per-settlement schedules.
 
-## MVP workflow
+## Install flow
 1. Admin runs `/setup init` to create bot-managed categories/channels.
    - Default (regular install) is non-destructive: it creates missing channels/roles and can move/update existing ones by name.
    - Optional: enable `clean_install` to wipe the server first (best-effort deletes **all channels** + **most roles**). Requires confirmation: `confirm_clean_install: DELETE`.
@@ -24,19 +25,19 @@ This bot is aimed at **community server management** (not guild systems). It hel
 3. Players start a claim via the `#mayor-requests` **Start Mayor Claim** button (form), then upload proof via DM.
 4. Moderators review requests in the private `#requests` channel (under `VerraVoice - Moderation`) and approve/deny via buttons.
 5. Players use `#self-assign` to select:
-   - Their settlement citizenship (zone → settlement; one at a time)
+   - Their settlement citizenship (one at a time)
    - Optional read-only access to other settlements via `View <Settlement>` roles (configured by zone)
    - Optional read-only access to entire zones via `View Zone - <Zone>` roles
    - `Guild Leader` / `Guild Officer` role requests (moderator approval via buttons)
 6. Admin adds settlements via `/settlement add` (optional; only needed if you don't want the built-in catalog).
 7. Mayors use `/settlement update` to keep their status card current.
-8. Mods/mayors set election & war times; the bot posts reminders automatically.
+8. Mods/mayors set election and war times; the bot posts reminders automatically.
 9. The bot maintains a `server-overview` embed with all settlements/tier/mayor.
 10. Each zone category has a `#mayors-<zone>` channel: citizens can read, only mayors can post.
 11. Verified mayors also receive the global hoisted `Mayor` role (so online mayors show separately in the member list).
 12. The overview includes each mayor's in-game guild name (captured from the mayor claim request when available).
 
-## Slash commands (MVP)
+## Slash commands
 - `/setup init|timezone|populate`
 - `/settlement add|list|set-tier|update|info|announce|destroyed`
 - `/mayor claim|approve|deny|assign|clear`
@@ -44,6 +45,8 @@ This bot is aimed at **community server management** (not guild systems). It hel
 - `/election set|clear|trigger-ue`
 - `/schedule create|list|cancel` (generic scheduled reminders)
 - `/war declare` (attacker + defender)
+- `/help` (quick help)
+- `/status` (config/permission sanity check for this server)
 
 ## Setup output (high level)
 `/setup init` creates:
@@ -61,16 +64,29 @@ This bot is aimed at **community server management** (not guild systems). It hel
 - Set the server timezone with `/setup timezone` (IANA name like `Europe/Oslo` or `UTC`).
 - Date inputs accept `YYYY-MM-DD HH:mm` in the configured timezone (or ISO like `2026-02-01T00:00`).
 
-## Adding the bot to multiple servers + command sync
+## Adding the bot to multiple servers and command sync
 - Invite the bot to any server using the OAuth2 URL (same bot can be in many servers).
 - Run `/setup init` separately in each server to create its channels/roles.
 - Slash command registration:
   - **Global commands** (`COMMANDS_MODE=global`): commands work in every server the bot is in, but updates can take up to ~1 hour to appear.
   - **Guild commands** (`COMMANDS_MODE=guild` + `DEV_GUILD_ID=<serverId>`): updates appear instantly, but only in that one server.
-  - If you see duplicates in the command picker, you likely have both global + guild commands registered; run once with `COMMANDS_CLEANUP=true` to remove the other scope.
+  - If you see duplicates in the command picker, you likely have both global and guild commands registered; run once with `COMMANDS_CLEANUP=true` to remove the other scope.
 
-## Data + future-proofing
+## Data and future-proofing
 The bot stores state in `data/state.json` with schema validation. The storage layer is intentionally isolated so it can later be swapped to SQLite/Postgres without changing command logic.
+
+## Health, logging, and runtime
+- `LOG_LEVEL` controls structured JSON logging (include `reqId` for correlation).
+- A simple health server listens on `HEALTH_PORT` (default `3000`) and serves `GET /health` with `{ "status": "ok" }`.
+- Process-level handlers log unhandled rejections/exceptions and set a non-zero exit code.
+
+## Local development quick start
+1. Install dependencies: `npm install`.
+2. Copy `.env.example` to `.env` and fill `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, and `DEV_GUILD_ID` (for fast guild command registration).
+3. Optional: set `COMMANDS_MODE=guild` and `LOG_LEVEL=debug` during development.
+4. Typecheck/build: `npm run typecheck` or `npm run build`.
+5. Run locally: `npm run dev` (watches with tsx) or `npm start` after building.
+6. Invite the bot to your dev guild and run `/setup init`.
 
 ## Security
 - Do not paste tokens in chat/logs.

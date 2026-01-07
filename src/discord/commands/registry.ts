@@ -3,6 +3,8 @@ import { handleElection } from "./election";
 import { handleMayor } from "./mayor";
 import { handleSchedule } from "./schedule";
 import { handleGuildInvite } from "./ginvite";
+import { handleHelp } from "./help";
+import { handleStatus } from "./status";
 import { handleSettlement } from "./settlement";
 import { handleSetup } from "./setup";
 import { CommandHandler } from "./types";
@@ -18,6 +20,7 @@ export function allCommands(): RegisteredCommand[] {
   const setup = new SlashCommandBuilder()
     .setName("setup")
     .setDescription("Install/repair VerraVoice channels/categories/roles")
+    .setDMPermission(false)
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand((s) =>
       s
@@ -52,7 +55,7 @@ export function allCommands(): RegisteredCommand[] {
   const settlement = new SlashCommandBuilder()
     .setName("settlement")
     .setDescription("Manage settlements and their status cards")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .setDMPermission(false)
     .addSubcommand((s) =>
       s
         .setName("add")
@@ -103,6 +106,7 @@ export function allCommands(): RegisteredCommand[] {
   const mayor = new SlashCommandBuilder()
     .setName("mayor")
     .setDescription("Mayor verification + assignment")
+    .setDMPermission(false)
     .addSubcommand((s) =>
       s
         .setName("claim")
@@ -141,7 +145,7 @@ export function allCommands(): RegisteredCommand[] {
   const election = new SlashCommandBuilder()
     .setName("election")
     .setDescription("Election schedule + reminders")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .setDMPermission(false)
     .addSubcommand((s) =>
       s
         .setName("set")
@@ -176,7 +180,7 @@ export function allCommands(): RegisteredCommand[] {
   const war = new SlashCommandBuilder()
     .setName("war")
     .setDescription("Declare settlement wars (scheduled reminders)")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .setDMPermission(false)
     .addSubcommand((s) =>
       s
         .setName("declare")
@@ -202,7 +206,7 @@ export function allCommands(): RegisteredCommand[] {
   const schedule = new SlashCommandBuilder()
     .setName("schedule")
     .setDescription("Create generic scheduled reminders")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .setDMPermission(false)
     .addSubcommand((s) =>
       s
         .setName("create")
@@ -233,9 +237,17 @@ export function allCommands(): RegisteredCommand[] {
   const ginvite = new SlashCommandBuilder()
     .setName("ginvite")
     .setDescription("Give your guild role to a member")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
+    .setDMPermission(false)
     .addUserOption((o) => o.setName("user").setDescription("Member to add to your guild").setRequired(true))
     .addStringOption((o) => o.setName("guild").setDescription("Guild name (required if you lead multiple guilds)"));
+
+  const help = new SlashCommandBuilder().setName("help").setDescription("Show quick help for VerraVoice");
+
+  const status = new SlashCommandBuilder()
+    .setName("status")
+    .setDescription("Check bot config/health for this server")
+    .setDMPermission(false)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild);
 
   return [
     { name: "setup", json: setup.toJSON(), handler: handleSetup },
@@ -245,6 +257,8 @@ export function allCommands(): RegisteredCommand[] {
     { name: "war", json: war.toJSON(), handler: handleWar },
     { name: "schedule", json: schedule.toJSON(), handler: handleSchedule },
     { name: "ginvite", json: ginvite.toJSON(), handler: handleGuildInvite },
+    { name: "help", json: help.toJSON(), handler: handleHelp },
+    { name: "status", json: status.toJSON(), handler: handleStatus },
   ];
 }
 

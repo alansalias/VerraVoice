@@ -16,6 +16,10 @@ const EnvSchema = z.object({
     .optional(),
   DATA_DIR: z.string().min(1).optional(),
   DEFAULT_TIMEZONE: z.string().min(1).optional(),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
+  HEALTH_PORT: z
+    .preprocess((v) => (typeof v === "string" ? Number(v) : v), z.number().int().positive().max(65535))
+    .optional(),
 });
 
 export type EnvConfig = z.infer<typeof EnvSchema>;
@@ -34,6 +38,8 @@ export function loadConfig(env: NodeJS.ProcessEnv): EnvConfig {
     cfg.COMMANDS_MODE = cfg.DEV_GUILD_ID ? "guild" : "global";
   }
   cfg.COMMANDS_CLEANUP ??= false;
+  cfg.LOG_LEVEL ??= "info";
+  cfg.HEALTH_PORT ??= 3000;
 
   return cfg;
 }

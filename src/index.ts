@@ -18,11 +18,21 @@ import { handleMayorClaimButtons, handleMayorClaimModal } from "./discord/intera
 import { handleMayorProofDmMessage } from "./discord/dm/mayorProof";
 import { handleMayorDashboardButtons, handleMayorDashboardMenus, handleMayorDashboardModal } from "./discord/interactions/mayorDashboard";
 import { handleGuildRoleButtons, handleGuildRoleModals } from "./discord/guildRoles";
+import { startHealthServer } from "./health";
 
 const config = loadConfig(process.env);
-const logger = new Logger("info");
+const logger = new Logger(config.LOG_LEVEL ?? "info");
 const dataDir = path.resolve(config.DATA_DIR ?? "data");
 const store = new StateStore(dataDir);
+
+process.on("unhandledRejection", (reason) => {
+  logger.error("Unhandled rejection", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  logger.error("Uncaught exception", err);
+  process.exitCode = 1;
+});
 
 async function main() {
   await store.load();
@@ -44,28 +54,33 @@ async function main() {
   const handlers = handlerByName();
 
   client.on("interactionCreate", async (interaction: Interaction) => {
+    const reqId = `${Date.now()}-${interaction.id ?? Math.random().toString(36).slice(2)}`;
+    const scopedLogger = logger.child({
+      reqId,
+      kind: interaction.isChatInputCommand() ? interaction.commandName : interaction.type,
+    });
     try {
       if (interaction.isAutocomplete()) {
         await handleAutocomplete(interaction, store);
         return;
       }
       if (interaction.isButton()) {
-        await handleMayorRequestButtons({ interaction, store, logger });
-        await handleRoleRequestButtons({ interaction, store, logger });
-        await handleMayorClaimButtons({ interaction, store, logger });
-        await handleMayorDashboardButtons({ interaction, store, logger });
+        await handleMayorRequestButtons({ interaction, store, logger: scopedLogger });
+        await handleRoleRequestButtons({ interaction, store, logger: scopedLogger });
+        await handleMayorClaimButtons({ interaction, store, logger: scopedLogger });
+        await handleMayorDashboardButtons({ interaction, store, logger: scopedLogger });
         await handleGuildRoleButtons({ interaction, store });
         return;
       }
       if (interaction.isStringSelectMenu()) {
         await handleSelfAssignMenus(interaction, store);
-        await handleMayorDashboardMenus({ interaction, store, logger });
+        await handleMayorDashboardMenus({ interaction, store, logger: scopedLogger });
         return;
       }
       if (interaction.isModalSubmit()) {
-        await handleRoleRequestModal({ interaction, store, logger });
-        await handleMayorClaimModal({ interaction, store, logger });
-        await handleMayorDashboardModal({ interaction, store, logger });
+        await handleRoleRequestModal({ interaction, store, logger: scopedLogger });
+        await handleMayorClaimModal({ interaction, store, logger: scopedLogger });
+        await handleMayorDashboardModal({ interaction, store, logger: scopedLogger });
         await handleGuildRoleModals({ interaction, store });
         return;
       }
@@ -73,9 +88,9 @@ async function main() {
 
       const handler = handlers[interaction.commandName];
       if (!handler) return;
-      await handler({ client, interaction, store, config, logger });
+      await handler({ client, interaction, store, config, logger: scopedLogger });
     } catch (err) {
-      logger.error("Interaction handler failed", err);
+      scopedLogger.error("Interaction handler failed", err);
       if (interaction.isRepliable()) {
         const content = err instanceof Error ? err.message : "Unknown error";
         if (interaction.deferred || interaction.replied) {
@@ -87,9 +102,11 @@ async function main() {
     }
   });
 
+  const stopScheduler = startScheduler({ client, store, logger });
+  const healthServer = startHealthServer(config.HEALTH_PORT ?? 3000, logger.child({ service: "health" }));
+
   client.once(Events.ClientReady, async () => {
     logger.info(`Logged in as ${client.user?.tag}`);
-    startScheduler({ client, store, logger });
     for (const guild of client.guilds.cache.values()) {
       await upsertGuildOverview(guild, store).catch(() => null);
     }
@@ -126,6 +143,16 @@ async function main() {
   });
 
   await client.login(config.DISCORD_TOKEN);
+
+  const shutdown = async () => {
+    logger.info("Shutting down...");
+    stopScheduler();
+    healthServer.close();
+    await client.destroy();
+    process.exit(0);
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 }
 
 void main().catch((err) => {

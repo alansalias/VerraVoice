@@ -25,7 +25,7 @@ export async function dmMayorWelcome(opts: {
   const termEnds = settlement.mayorUntilMs ? `<t:${Math.floor(settlement.mayorUntilMs / 1000)}:D>` : null;
 
   const embed = new EmbedBuilder()
-    .setTitle(`Congratulations — you're the Mayor of ${settlement.name}`)
+    .setTitle(`Congratulations - you're the Mayor of ${settlement.name}`)
     .setColor(0xf1c40f)
     .setDescription(
       [

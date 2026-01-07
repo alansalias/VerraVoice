@@ -23,9 +23,9 @@ function buildGuildControlsEmbed() {
       [
         "Tools for Guild Leaders/Officers to manage their guild role.",
         "",
-        "• Use `/ginvite user:<member> guild:<name>` to give your guild role to members.",
-        "• Abuse (handing out guild roles broadly) can lead to moderation action.",
-        "• Buttons below let you rename or delete your guild role.",
+        "- Use `/ginvite user:<member> guild:<name>` to give your guild role to members.",
+        "- Abuse (handing out guild roles broadly) can lead to moderation action.",
+        "- Buttons below let you rename or delete your guild role.",
         "",
         "Requirements: you must have the server `Guild Leader` or `Guild Officer` role **and** your guild's role.",
       ].join("\n"),
