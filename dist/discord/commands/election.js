@@ -98,6 +98,13 @@ const handleElection = async ({ interaction, store }) => {
             for (const id of oldIds)
                 delete g.schedule[id];
         });
+        const regDurationHours = Math.max(1, Math.round(voteStart.diff(reg, "hours").hours));
+        const voteDurationHours = Math.max(1, Math.round(voteEnd.diff(voteStart, "hours").hours));
+        const settlementChannel = settlement.channelId ? `<#${settlement.channelId}>` : settlement.name;
+        const registrationDescription = `Registration open for **${settlement.name}**. Duration: ~${regDurationHours}h. Candidates: register in-game; share your plans in ${settlementChannel}.`;
+        const votingDescription = `Voting open for **${settlement.name}**. Duration: ~${voteDurationHours}h. One vote per account; last vote per account counts.`;
+        const votingEndsSoonDescription = `Voting for **${settlement.name}** ends in 24h. Make sure your vote is in.`;
+        const votingClosedDescription = `Voting closed for **${settlement.name}**. Results update when the game finalizes the winner.`;
         const idReg = (0, ids_1.newId)("election_reg");
         const idVoteOpen = (0, ids_1.newId)("election_voteopen");
         const idVoteEndsSoon = (0, ids_1.newId)("election_voteends");
@@ -105,6 +112,10 @@ const handleElection = async ({ interaction, store }) => {
         const now = Date.now();
         const voteEndsSoonAt = voteEnd.minus({ hours: 24 });
         const includeVoteEndsSoon = voteEndsSoonAt.toMillis() > now;
+        const mentionRoleId = mentionRole?.id ?? null;
+        const reminderBase = [1440, 60, 15, 0];
+        const regReminderOffsets = reminderBase.filter((m) => m * 60 * 1000 <= voteStart.toMillis() - reg.toMillis());
+        const voteReminderOffsets = reminderBase.filter((m) => m * 60 * 1000 <= voteEnd.toMillis() - voteStart.toMillis());
         await store.update(async (state) => {
             const g = state.guilds[guild.id];
             if (!g)
@@ -117,11 +128,11 @@ const handleElection = async ({ interaction, store }) => {
                 warKind: null,
                 discordEventId: null,
                 title: `${settlement.name}: Election registration opens`,
-                description: null,
+                description: registrationDescription,
                 announceChannelId: announceChannelId,
-                mentionRoleId: mentionRole?.id ?? null,
+                mentionRoleId,
                 startsAtMs: reg.toMillis(),
-                reminderOffsetsMinutes: [0],
+                reminderOffsetsMinutes: regReminderOffsets.length ? regReminderOffsets : [60, 0],
                 sentOffsetMinutes: [],
                 createdByUserId: interaction.user.id,
                 createdAtMs: now,
@@ -134,11 +145,11 @@ const handleElection = async ({ interaction, store }) => {
                 warKind: null,
                 discordEventId: null,
                 title: `${settlement.name}: Election voting is open`,
-                description: null,
+                description: votingDescription,
                 announceChannelId: announceChannelId,
-                mentionRoleId: mentionRole?.id ?? null,
+                mentionRoleId,
                 startsAtMs: voteStart.toMillis(),
-                reminderOffsetsMinutes: [0],
+                reminderOffsetsMinutes: voteReminderOffsets.length ? voteReminderOffsets : [60, 0],
                 sentOffsetMinutes: [],
                 createdByUserId: interaction.user.id,
                 createdAtMs: now,
@@ -152,7 +163,7 @@ const handleElection = async ({ interaction, store }) => {
                     warKind: null,
                     discordEventId: null,
                     title: `${settlement.name}: Voting ends in 24h`,
-                    description: null,
+                    description: votingEndsSoonDescription,
                     announceChannelId: announceChannelId,
                     mentionRoleId: mentionRole?.id ?? null,
                     startsAtMs: voteEndsSoonAt.toMillis(),
@@ -170,7 +181,7 @@ const handleElection = async ({ interaction, store }) => {
                 warKind: null,
                 discordEventId: null,
                 title: `${settlement.name}: Voting has ended`,
-                description: null,
+                description: votingClosedDescription,
                 announceChannelId: announceChannelId,
                 mentionRoleId: mentionRole?.id ?? null,
                 startsAtMs: voteEnd.toMillis(),
@@ -190,13 +201,17 @@ const handleElection = async ({ interaction, store }) => {
         });
         await interaction.reply({
             content: `Election schedule set for **${settlement.name}**:\n` +
-                `- Registration: <t:${Math.floor(reg.toSeconds())}:F>\n` +
-                `- Voting: <t:${Math.floor(voteStart.toSeconds())}:F> -> <t:${Math.floor(voteEnd.toSeconds())}:F>`,
+                `- Registration: <t:${Math.floor(reg.toSeconds())}:F> (approx ${regDurationHours}h)\n` +
+                `- Voting: <t:${Math.floor(voteStart.toSeconds())}:F> -> <t:${Math.floor(voteEnd.toSeconds())}:F> (approx ${voteDurationHours}h)\n` +
+                `Tip: candidates can share plans in ${settlementChannel}. One vote per account; last vote counts.`,
             flags: v10_1.MessageFlags.Ephemeral,
         });
         const chan = await guild.channels.fetch(announceChannelId).catch(() => null);
         if (chan && chan.type === discord_js_1.ChannelType.GuildText) {
-            await chan.send(`Election schedule updated for **${settlement.name}**.\nRegistration: <t:${Math.floor(reg.toSeconds())}:F>\nVoting: <t:${Math.floor(voteStart.toSeconds())}:F> -> <t:${Math.floor(voteEnd.toSeconds())}:F>`);
+            await chan.send(`Election schedule updated for **${settlement.name}**.\n` +
+                `Registration: <t:${Math.floor(reg.toSeconds())}:F> (approx ${regDurationHours}h)\n` +
+                `Voting: <t:${Math.floor(voteStart.toSeconds())}:F> -> <t:${Math.floor(voteEnd.toSeconds())}:F> (approx ${voteDurationHours}h)\n` +
+                `Candidates: register in-game; share your plans in ${settlementChannel}. One vote per account; last vote counts.`);
         }
         return;
     }

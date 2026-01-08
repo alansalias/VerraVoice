@@ -7,6 +7,7 @@ const settlementCard_1 = require("../embeds/settlementCard");
 const overview_1 = require("../overview");
 const mayorAggregate_1 = require("../mayorAggregate");
 const mayorDm_1 = require("../mayorDm");
+const mayorTerm_1 = require("../mayorTerm");
 function disableReviewButtons(requestId) {
     return new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
         .setCustomId(`mayorreq:approve:${requestId}`)
@@ -154,7 +155,7 @@ async function handleMayorRequestButtons(opts) {
     if (action !== "approve")
         return;
     await setMayorRole({ guild, store, settlement, newMayorUserId: req.requesterUserId });
-    const termMs = 30 * 24 * 60 * 60 * 1000;
+    const termEndMs = (0, mayorTerm_1.nextElectionTermEndMs)(guildState.config.timezone);
     await store.update(async (state) => {
         const gs = state.guilds[guild.id];
         if (!gs)
@@ -165,7 +166,7 @@ async function handleMayorRequestButtons(opts) {
         s.mayorUserId = req.requesterUserId;
         s.mayorGuildName = req.guildName?.trim() ? req.guildName.trim() : null;
         s.mayorSinceMs = now;
-        s.mayorUntilMs = now + termMs;
+        s.mayorUntilMs = termEndMs;
         s.updatedAtMs = now;
         const r = gs.mayorRequests[requestId];
         if (r) {
@@ -180,7 +181,7 @@ async function handleMayorRequestButtons(opts) {
         if (chan && chan.type === discord_js_1.ChannelType.GuildText) {
             await chan
                 .send({
-                content: `New mayor for **${settlement.name}**: <@${req.requesterUserId}> (term ends <t:${Math.floor((now + termMs) / 1000)}:D>).`,
+                content: `New mayor for **${settlement.name}**: <@${req.requesterUserId}> (term ends <t:${Math.floor(termEndMs / 1000)}:D>).`,
                 allowedMentions: { parse: [] },
             })
                 .catch(() => null);

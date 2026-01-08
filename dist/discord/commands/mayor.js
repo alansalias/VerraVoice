@@ -10,6 +10,7 @@ const permissions_1 = require("../permissions");
 const moderationRoles_1 = require("../moderationRoles");
 const mayorAggregate_1 = require("../mayorAggregate");
 const mayorDm_1 = require("../mayorDm");
+const mayorTerm_1 = require("../mayorTerm");
 function findSettlement(guildState, input) {
     const byId = guildState?.settlements?.[input];
     if (byId)
@@ -236,7 +237,7 @@ const handleMayor = async ({ interaction, store }) => {
         }
         await setMayorRole({ guild, store, settlement, newMayorUserId: req.requesterUserId });
         const now = Date.now();
-        const termMs = 30 * 24 * 60 * 60 * 1000;
+        const termEndMs = (0, mayorTerm_1.nextElectionTermEndMs)(guildState.config.timezone);
         await store.update(async (state) => {
             const gs = state.guilds[guild.id];
             if (!gs)
@@ -247,7 +248,7 @@ const handleMayor = async ({ interaction, store }) => {
             s.mayorUserId = req.requesterUserId;
             s.mayorGuildName = req.guildName?.trim() ? req.guildName.trim() : null;
             s.mayorSinceMs = now;
-            s.mayorUntilMs = now + termMs;
+            s.mayorUntilMs = termEndMs;
             s.updatedAtMs = now;
             const r = gs.mayorRequests[requestId];
             if (r) {
@@ -267,7 +268,7 @@ const handleMayor = async ({ interaction, store }) => {
             if (chan && chan.type === discord_js_1.ChannelType.GuildText) {
                 const guildName = updated?.mayorGuildName?.trim();
                 const guildLabel = guildName ? ` (Guild: **${guildName}**)` : "";
-                await chan.send(`New mayor for **${settlement.name}**: <@${req.requesterUserId}>${guildLabel} (term ends <t:${Math.floor((now + termMs) / 1000)}:D>).`);
+                await chan.send(`New mayor for **${settlement.name}**: <@${req.requesterUserId}>${guildLabel} (term ends <t:${Math.floor(termEndMs / 1000)}:D>).`);
             }
         }
         await interaction.reply({
@@ -293,7 +294,7 @@ const handleMayor = async ({ interaction, store }) => {
         }
         await setMayorRole({ guild, store, settlement, newMayorUserId: user.id });
         const now = Date.now();
-        const termMs = 30 * 24 * 60 * 60 * 1000;
+        const termEndMs = (0, mayorTerm_1.nextElectionTermEndMs)(guildState.config.timezone);
         await store.update(async (state) => {
             const s = state.guilds[guild.id]?.settlements?.[settlement.id];
             if (!s)
@@ -301,7 +302,7 @@ const handleMayor = async ({ interaction, store }) => {
             s.mayorUserId = user.id;
             s.mayorGuildName = null;
             s.mayorSinceMs = now;
-            s.mayorUntilMs = now + termMs;
+            s.mayorUntilMs = termEndMs;
             s.updatedAtMs = now;
         });
         const updated = store.get().guilds[guild.id]?.settlements?.[settlement.id];

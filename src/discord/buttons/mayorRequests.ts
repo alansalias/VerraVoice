@@ -15,6 +15,7 @@ import { StateStore } from "../../state/store";
 import { Logger } from "../../logger";
 import { allSettlementMayorRoleIds, getOrCreateMayorAggregateRoleId, syncMayorAggregateForMember } from "../mayorAggregate";
 import { dmMayorWelcome } from "../mayorDm";
+import { nextElectionTermEndMs } from "../mayorTerm";
 
 function disableReviewButtons(requestId: string) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -176,7 +177,7 @@ export async function handleMayorRequestButtons(opts: {
   if (action !== "approve") return;
 
   await setMayorRole({ guild, store, settlement, newMayorUserId: req.requesterUserId });
-  const termMs = 30 * 24 * 60 * 60 * 1000;
+  const termEndMs = nextElectionTermEndMs(guildState.config.timezone);
 
   await store.update(async (state) => {
     const gs = state.guilds[guild.id];
@@ -186,7 +187,7 @@ export async function handleMayorRequestButtons(opts: {
     s.mayorUserId = req.requesterUserId;
     s.mayorGuildName = req.guildName?.trim() ? req.guildName.trim() : null;
     s.mayorSinceMs = now;
-    s.mayorUntilMs = now + termMs;
+    s.mayorUntilMs = termEndMs;
     s.updatedAtMs = now;
     const r = gs.mayorRequests[requestId];
     if (r) {
@@ -202,7 +203,7 @@ export async function handleMayorRequestButtons(opts: {
     if (chan && chan.type === ChannelType.GuildText) {
       await (chan as TextChannel)
         .send({
-          content: `New mayor for **${settlement.name}**: <@${req.requesterUserId}> (term ends <t:${Math.floor((now + termMs) / 1000)}:D>).`,
+          content: `New mayor for **${settlement.name}**: <@${req.requesterUserId}> (term ends <t:${Math.floor(termEndMs / 1000)}:D>).`,
           allowedMentions: { parse: [] },
         })
         .catch(() => null);
