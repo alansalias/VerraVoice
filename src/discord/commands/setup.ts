@@ -552,12 +552,12 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
 
   const adminRoleId = await ensureRole({
     guild,
-    desiredName: "VerraVoice Admin",
+    desiredName: "Admin",
     permissions: [PermissionFlagsBits.Administrator],
   });
   const moderatorRoleId = await ensureRole({
     guild,
-    desiredName: "VerraVoice Moderator",
+    desiredName: "Moderator",
     permissions: [PermissionFlagsBits.ModerateMembers, PermissionFlagsBits.ManageMessages],
   });
 

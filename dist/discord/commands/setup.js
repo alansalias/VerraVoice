@@ -507,12 +507,12 @@ const handleSetup = async ({ interaction, store, config }) => {
     });
     const adminRoleId = await ensureRole({
         guild,
-        desiredName: "VerraVoice Admin",
+        desiredName: "Admin",
         permissions: [discord_js_1.PermissionFlagsBits.Administrator],
     });
     const moderatorRoleId = await ensureRole({
         guild,
-        desiredName: "VerraVoice Moderator",
+        desiredName: "Moderator",
         permissions: [discord_js_1.PermissionFlagsBits.ModerateMembers, discord_js_1.PermissionFlagsBits.ManageMessages],
     });
     const mayorAggregateRoleId = await (0, mayorAggregate_1.ensureMayorAggregateRole)(guild);
