@@ -1,0 +1,202 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.allCommands = allCommands;
+exports.commandsJson = commandsJson;
+exports.handlerByName = handlerByName;
+const discord_js_1 = require("discord.js");
+const election_1 = require("./election");
+const mayor_1 = require("./mayor");
+const schedule_1 = require("./schedule");
+const ginvite_1 = require("./ginvite");
+const help_1 = require("./help");
+const status_1 = require("./status");
+const settlement_1 = require("./settlement");
+const setup_1 = require("./setup");
+const war_1 = require("./war");
+function allCommands() {
+    const setup = new discord_js_1.SlashCommandBuilder()
+        .setName("setup")
+        .setDescription("Install/repair VerraVoice channels/categories/roles")
+        .setDMPermission(false)
+        .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.ManageGuild)
+        .addSubcommand((s) => s
+        .setName("init")
+        .setDescription("Create/repair VerraVoice structure (safe; does not delete channels)")
+        .addBooleanOption((o) => o
+        .setName("clean_install")
+        .setDescription("DESTRUCTIVE: delete ALL channels + most roles first (requires confirmation)")
+        .setRequired(false))
+        .addStringOption((o) => o
+        .setName("confirm_clean_install")
+        .setDescription("Required when clean_install is enabled")
+        .addChoices({ name: "DELETE", value: "DELETE" })
+        .setRequired(false)))
+        .addSubcommand((s) => s
+        .setName("timezone")
+        .setDescription("Set this server's timezone for parsing dates (IANA name)")
+        .addStringOption((o) => o.setName("timezone").setDescription("e.g. Europe/Oslo").setRequired(true)))
+        .addSubcommand((s) => s
+        .setName("populate")
+        .setDescription("Create all settlement categories/channels from the local catalog file"));
+    const settlement = new discord_js_1.SlashCommandBuilder()
+        .setName("settlement")
+        .setDescription("Manage settlements and their status cards")
+        .setDMPermission(false)
+        .addSubcommand((s) => s
+        .setName("add")
+        .setDescription("Add a settlement (creates role + channel + status card)")
+        .addStringOption((o) => o.setName("name").setDescription("Settlement name").setRequired(true)))
+        .addSubcommand((s) => s.setName("list").setDescription("List settlements"))
+        .addSubcommand((s) => s
+        .setName("set-tier")
+        .setDescription("Set settlement tier (0-5)")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true))
+        .addIntegerOption((o) => o.setName("tier").setDescription("Tier 0-5").setRequired(true).setMinValue(0).setMaxValue(5)))
+        .addSubcommand((s) => s
+        .setName("update")
+        .setDescription("Update settlement info (mayor/admin)")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true))
+        .addStringOption((o) => o.setName("buildings").setDescription("Buildings (free text)").setRequired(false))
+        .addStringOption((o) => o.setName("buy_orders").setDescription("Buy orders (free text)").setRequired(false))
+        .addStringOption((o) => o.setName("notes").setDescription("Notes (free text)").setRequired(false)))
+        .addSubcommand((s) => s
+        .setName("info")
+        .setDescription("Show settlement info")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true)))
+        .addSubcommand((s) => s
+        .setName("announce")
+        .setDescription("Post an announcement as the settlement mayor")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true))
+        .addStringOption((o) => o.setName("message").setDescription("Announcement text").setRequired(true))
+        .addBooleanOption((o) => o.setName("ping_citizens").setDescription("Ping the settlement citizen role (default: true)").setRequired(false)))
+        .addSubcommand((s) => s
+        .setName("destroyed")
+        .setDescription("Declare settlement destroyed (resets tier + clears mayor)")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true))
+        .addStringOption((o) => o.setName("reason").setDescription("Optional reason/details").setRequired(false)));
+    const mayor = new discord_js_1.SlashCommandBuilder()
+        .setName("mayor")
+        .setDescription("Mayor verification + assignment")
+        .setDMPermission(false)
+        .addSubcommand((s) => s
+        .setName("claim")
+        .setDescription("Request mayor role for a settlement (requires moderator approval)")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true))
+        .addAttachmentOption((o) => o.setName("proof").setDescription("Screenshot proof (image)").setRequired(true))
+        .addStringOption((o) => o.setName("guild_name").setDescription("Your in-game guild name").setRequired(true))
+        .addStringOption((o) => o.setName("note").setDescription("Short note for moderators").setRequired(true)))
+        .addSubcommand((s) => s
+        .setName("approve")
+        .setDescription("Approve a mayor claim request (admin/mod)")
+        .addStringOption((o) => o.setName("request_id").setDescription("Request id").setRequired(true)))
+        .addSubcommand((s) => s
+        .setName("deny")
+        .setDescription("Deny a mayor claim request (admin/mod)")
+        .addStringOption((o) => o.setName("request_id").setDescription("Request id").setRequired(true)))
+        .addSubcommand((s) => s
+        .setName("assign")
+        .setDescription("Set the mayor directly (admin/mod)")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true))
+        .addUserOption((o) => o.setName("user").setDescription("Mayor user").setRequired(true)))
+        .addSubcommand((s) => s
+        .setName("clear")
+        .setDescription("Clear mayor (admin/mod)")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true)));
+    const election = new discord_js_1.SlashCommandBuilder()
+        .setName("election")
+        .setDescription("Election schedule + reminders")
+        .setDMPermission(false)
+        .addSubcommand((s) => s
+        .setName("set")
+        .setDescription("Set election schedule for a settlement (creates reminders)")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true))
+        .addStringOption((o) => o.setName("registration_start").setDescription("e.g. 2026-01-27 12:00").setRequired(true))
+        .addStringOption((o) => o.setName("voting_start").setDescription("e.g. 2026-02-01 00:00").setRequired(true))
+        .addStringOption((o) => o.setName("voting_end").setDescription("e.g. 2026-02-05 23:59").setRequired(true))
+        .addChannelOption((o) => o.setName("announce_channel").setDescription("Where reminders go (defaults to bot announcements channel)"))
+        .addRoleOption((o) => o.setName("mention_role").setDescription("Role to ping for reminders (optional)")))
+        .addSubcommand((s) => s
+        .setName("clear")
+        .setDescription("Clear election schedule + reminders")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true)))
+        .addSubcommand((s) => s
+        .setName("trigger-ue")
+        .setDescription("Trigger an unscheduled election (clears mayor, 24h reg + 24h voting)")
+        .addStringOption((o) => o.setName("settlement").setDescription("Settlement").setRequired(true).setAutocomplete(true))
+        .addStringOption((o) => o.setName("reason").setDescription("Optional reason/details").setRequired(false))
+        .addChannelOption((o) => o.setName("announce_channel").setDescription("Where reminders go (defaults to bot announcements channel)"))
+        .addRoleOption((o) => o.setName("mention_role").setDescription("Role to ping for reminders (optional)")));
+    const war = new discord_js_1.SlashCommandBuilder()
+        .setName("war")
+        .setDescription("Declare settlement wars (scheduled reminders)")
+        .setDMPermission(false)
+        .addSubcommand((s) => s
+        .setName("declare")
+        .setDescription("Declare an upcoming settlement war (creates reminders)")
+        .addStringOption((o) => o.setName("attacker").setDescription("Attacking settlement").setRequired(true).setAutocomplete(true))
+        .addStringOption((o) => o.setName("defender").setDescription("Defending settlement").setRequired(true).setAutocomplete(true))
+        .addStringOption((o) => o.setName("starts_at").setDescription("e.g. 2026-02-10 20:00").setRequired(true))
+        .addStringOption((o) => o.setName("title").setDescription("Short title").setRequired(true))
+        .addStringOption((o) => o
+        .setName("kind")
+        .setDescription("War type")
+        .setRequired(false)
+        .addChoices({ name: "War", value: "war" }, { name: "Siege", value: "siege" }))
+        .addStringOption((o) => o.setName("description").setDescription("Optional details").setRequired(false))
+        .addChannelOption((o) => o.setName("announce_channel").setDescription("Where reminders go (defaults to bot announcements channel)"))
+        .addRoleOption((o) => o.setName("mention_role").setDescription("Role to ping (optional)")));
+    const schedule = new discord_js_1.SlashCommandBuilder()
+        .setName("schedule")
+        .setDescription("Create generic scheduled reminders")
+        .setDMPermission(false)
+        .addSubcommand((s) => s
+        .setName("create")
+        .setDescription("Create a scheduled reminder")
+        .addStringOption((o) => o.setName("title").setDescription("Title").setRequired(true))
+        .addStringOption((o) => o.setName("when").setDescription("e.g. 2026-02-10 20:00").setRequired(true))
+        .addStringOption((o) => o.setName("reminders").setDescription("Comma-separated minutes before (default: 1440,60,15,0)").setRequired(false))
+        .addChannelOption((o) => o.setName("announce_channel").setDescription("Channel to post reminders in"))
+        .addRoleOption((o) => o.setName("mention_role").setDescription("Role to ping (optional)"))
+        .addStringOption((o) => o
+        .setName("settlement")
+        .setDescription("Associate with a settlement (optional)")
+        .setRequired(false)
+        .setAutocomplete(true)))
+        .addSubcommand((s) => s.setName("list").setDescription("List upcoming reminders"))
+        .addSubcommand((s) => s
+        .setName("cancel")
+        .setDescription("Cancel a scheduled reminder")
+        .addStringOption((o) => o.setName("id").setDescription("Schedule id").setRequired(true)));
+    const ginvite = new discord_js_1.SlashCommandBuilder()
+        .setName("ginvite")
+        .setDescription("Give your guild role to a member")
+        .setDMPermission(false)
+        .addUserOption((o) => o.setName("user").setDescription("Member to add to your guild").setRequired(true))
+        .addStringOption((o) => o.setName("guild").setDescription("Guild name (required if you lead multiple guilds)"));
+    const help = new discord_js_1.SlashCommandBuilder().setName("help").setDescription("Show quick help for VerraVoice");
+    const status = new discord_js_1.SlashCommandBuilder()
+        .setName("status")
+        .setDescription("Check bot config/health for this server")
+        .setDMPermission(false)
+        .setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.ManageGuild);
+    return [
+        { name: "setup", json: setup.toJSON(), handler: setup_1.handleSetup },
+        { name: "settlement", json: settlement.toJSON(), handler: settlement_1.handleSettlement },
+        { name: "mayor", json: mayor.toJSON(), handler: mayor_1.handleMayor },
+        { name: "election", json: election.toJSON(), handler: election_1.handleElection },
+        { name: "war", json: war.toJSON(), handler: war_1.handleWar },
+        { name: "schedule", json: schedule.toJSON(), handler: schedule_1.handleSchedule },
+        { name: "ginvite", json: ginvite.toJSON(), handler: ginvite_1.handleGuildInvite },
+        { name: "help", json: help.toJSON(), handler: help_1.handleHelp },
+        { name: "status", json: status.toJSON(), handler: status_1.handleStatus },
+    ];
+}
+function commandsJson() {
+    return allCommands().map((c) => c.json);
+}
+function handlerByName() {
+    const map = {};
+    for (const cmd of allCommands())
+        map[cmd.name] = cmd.handler;
+    return map;
+}

@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "prestart": "npm run build",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "catalog:from-csv": "tsx scripts/catalog-from-csv.ts"

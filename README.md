@@ -62,11 +62,10 @@ If your server wants structure around settlements (who's mayor, who are citizens
 
 ## Plug-and-play hosting (Pebblehost)
 - Node version: `>=18` (set this in your Pebblehost panel).
-- Start command: `npm start` (builds automatically via `prestart` then runs `dist/index.js`).
-- Steps after cloning:
+- Start file: `dist/index.js` (already built/committed).
+- Steps after cloning/pulling:
   1. Upload/compose `.env` (use `.env.example` as reference). Required: `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`; recommended: `DEV_GUILD_ID`, `LOG_LEVEL=info`, `COMMANDS_MODE=guild` while testing.
-  2. Run `npm ci` once (Pebblehost “Install Dependencies”).
-  3. Click **Start**; `npm start` will build then launch the bot.
+  2. Hit **Start** (Pebblehost installs deps, then runs `npm start` → `node dist/index.js`; no build needed on host).
 - Health check: `GET /health` on `HEALTH_PORT` (default `3000`).
 - Logs: Pebblehost console will show structured JSON logs with `reqId`.
 
