@@ -623,16 +623,34 @@ const handleSetup = async ({ interaction, store, config }) => {
                     discord_js_1.PermissionFlagsBits.MentionEveryone,
                 ],
             },
-            ...modRoleIds.map((id) => ({
-                id,
-                allow: [
-                    discord_js_1.PermissionFlagsBits.ViewChannel,
-                    discord_js_1.PermissionFlagsBits.SendMessages,
-                    discord_js_1.PermissionFlagsBits.EmbedLinks,
-                    discord_js_1.PermissionFlagsBits.ReadMessageHistory,
-                    discord_js_1.PermissionFlagsBits.MentionEveryone,
-                ],
-            })),
+            ...(moderatorRoleId
+                ? [
+                    {
+                        id: moderatorRoleId,
+                        allow: [
+                            discord_js_1.PermissionFlagsBits.ViewChannel,
+                            discord_js_1.PermissionFlagsBits.SendMessages,
+                            discord_js_1.PermissionFlagsBits.EmbedLinks,
+                            discord_js_1.PermissionFlagsBits.ReadMessageHistory,
+                            discord_js_1.PermissionFlagsBits.MentionEveryone,
+                        ],
+                    },
+                ]
+                : []),
+            ...(adminRoleId
+                ? [
+                    {
+                        id: adminRoleId,
+                        allow: [
+                            discord_js_1.PermissionFlagsBits.ViewChannel,
+                            discord_js_1.PermissionFlagsBits.SendMessages,
+                            discord_js_1.PermissionFlagsBits.EmbedLinks,
+                            discord_js_1.PermissionFlagsBits.ReadMessageHistory,
+                            discord_js_1.PermissionFlagsBits.MentionEveryone,
+                        ],
+                    },
+                ]
+                : []),
         ],
     });
     const adminChatChannelId = await ensureTextChannel({

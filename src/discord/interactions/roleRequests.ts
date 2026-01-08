@@ -20,15 +20,17 @@ import { StateStore } from "../../state/store";
 import { newId } from "../../utils/ids";
 import { moderatorRoleIds } from "../moderationRoles";
 
-function canReview(interaction: ButtonInteraction<"cached">) {
+function canReview(opts: { interaction: ButtonInteraction<"cached">; config?: { adminRoleId?: string | null; moderatorRoleId?: string | null } }) {
+  const { interaction, config } = opts;
+  const member = interaction.member;
+  const adminRoleId = config?.adminRoleId ?? null;
+  const moderatorRoleId = config?.moderatorRoleId ?? null;
   const perms = interaction.memberPermissions;
   if (!perms) return false;
-  return (
-    perms.has(PermissionFlagsBits.Administrator) ||
-    perms.has(PermissionFlagsBits.ManageGuild) ||
-    perms.has(PermissionFlagsBits.ModerateMembers) ||
-    perms.has(PermissionFlagsBits.ManageRoles)
-  );
+  if (perms.has(PermissionFlagsBits.Administrator) || perms.has(PermissionFlagsBits.ManageGuild)) return true;
+  if (adminRoleId && member.roles.cache.has(adminRoleId)) return true;
+  if (moderatorRoleId && member.roles.cache.has(moderatorRoleId)) return true;
+  return false;
 }
 
 function roleLabel(type: RoleRequest["type"]) {
@@ -112,13 +114,13 @@ export async function handleRoleRequestButtons(opts: {
 
   if (action !== "approve" && action !== "deny") return;
 
-  if (!canReview(interaction)) {
+  const gs = store.get().guilds[interaction.guildId];
+  if (!canReview({ interaction, config: gs?.config })) {
     await interaction.reply({ content: "You don't have permission to review these requests.", flags: MessageFlags.Ephemeral });
     return;
   }
 
   const requestId = tail;
-  const gs = store.get().guilds[interaction.guildId];
   const req = gs?.roleRequests?.[requestId];
   if (!req) {
     await interaction.reply({ content: "Request not found.", flags: MessageFlags.Ephemeral });

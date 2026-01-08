@@ -676,16 +676,34 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
           PermissionFlagsBits.MentionEveryone,
         ],
       },
-      ...modRoleIds.map((id) => ({
-        id,
-        allow: [
-          PermissionFlagsBits.ViewChannel,
-          PermissionFlagsBits.SendMessages,
-          PermissionFlagsBits.EmbedLinks,
-          PermissionFlagsBits.ReadMessageHistory,
-          PermissionFlagsBits.MentionEveryone,
-        ],
-      })),
+      ...(moderatorRoleId
+        ? [
+            {
+              id: moderatorRoleId,
+              allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.MentionEveryone,
+              ],
+            },
+          ]
+        : []),
+      ...(adminRoleId
+        ? [
+            {
+              id: adminRoleId,
+              allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.MentionEveryone,
+              ],
+            },
+          ]
+        : []),
     ],
   });
 

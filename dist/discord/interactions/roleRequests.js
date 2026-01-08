@@ -7,14 +7,21 @@ const v10_1 = require("discord-api-types/v10");
 const guildRoles_1 = require("../guildRoles");
 const ids_1 = require("../../utils/ids");
 const moderationRoles_1 = require("../moderationRoles");
-function canReview(interaction) {
+function canReview(opts) {
+    const { interaction, config } = opts;
+    const member = interaction.member;
+    const adminRoleId = config?.adminRoleId ?? null;
+    const moderatorRoleId = config?.moderatorRoleId ?? null;
     const perms = interaction.memberPermissions;
     if (!perms)
         return false;
-    return (perms.has(discord_js_1.PermissionFlagsBits.Administrator) ||
-        perms.has(discord_js_1.PermissionFlagsBits.ManageGuild) ||
-        perms.has(discord_js_1.PermissionFlagsBits.ModerateMembers) ||
-        perms.has(discord_js_1.PermissionFlagsBits.ManageRoles));
+    if (perms.has(discord_js_1.PermissionFlagsBits.Administrator) || perms.has(discord_js_1.PermissionFlagsBits.ManageGuild))
+        return true;
+    if (adminRoleId && member.roles.cache.has(adminRoleId))
+        return true;
+    if (moderatorRoleId && member.roles.cache.has(moderatorRoleId))
+        return true;
+    return false;
 }
 function roleLabel(type) {
     return type === "guild_leader" ? "Guild Leader" : "Guild Officer";
@@ -72,12 +79,12 @@ async function handleRoleRequestButtons(opts) {
     }
     if (action !== "approve" && action !== "deny")
         return;
-    if (!canReview(interaction)) {
+    const gs = store.get().guilds[interaction.guildId];
+    if (!canReview({ interaction, config: gs?.config })) {
         await interaction.reply({ content: "You don't have permission to review these requests.", flags: v10_1.MessageFlags.Ephemeral });
         return;
     }
     const requestId = tail;
-    const gs = store.get().guilds[interaction.guildId];
     const req = gs?.roleRequests?.[requestId];
     if (!req) {
         await interaction.reply({ content: "Request not found.", flags: v10_1.MessageFlags.Ephemeral });

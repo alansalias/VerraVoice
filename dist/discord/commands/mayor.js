@@ -201,7 +201,7 @@ const handleMayor = async ({ interaction, store }) => {
         return;
     }
     if (sub === "approve" || sub === "deny") {
-        if (!(0, permissions_1.canReviewMayorRequests)(interaction)) {
+        if (!(0, permissions_1.canReviewMayorRequests)(interaction, guildState.config)) {
             await interaction.reply({
                 content: "You need moderation permissions (Manage Server / Moderate Members / Manage Roles) to review requests.",
                 flags: v10_1.MessageFlags.Ephemeral,
@@ -285,7 +285,7 @@ const handleMayor = async ({ interaction, store }) => {
         return;
     }
     if (sub === "assign") {
-        if (!(0, permissions_1.canReviewMayorRequests)(interaction)) {
+        if (!(0, permissions_1.canReviewMayorRequests)(interaction, guildState.config)) {
             await interaction.reply({
                 content: "You need moderation permissions (Manage Server / Moderate Members / Manage Roles) to assign mayors.",
                 flags: v10_1.MessageFlags.Ephemeral,
@@ -331,7 +331,7 @@ const handleMayor = async ({ interaction, store }) => {
         return;
     }
     if (sub === "clear") {
-        if (!(0, permissions_1.canReviewMayorRequests)(interaction)) {
+        if (!(0, permissions_1.canReviewMayorRequests)(interaction, guildState.config)) {
             await interaction.reply({
                 content: "You need moderation permissions (Manage Server / Moderate Members / Manage Roles) to clear mayors.",
                 flags: v10_1.MessageFlags.Ephemeral,

@@ -19,14 +19,21 @@ function disableReviewButtons(requestId) {
         .setStyle(discord_js_1.ButtonStyle.Danger)
         .setDisabled(true));
 }
-function canReview(interaction) {
+function canReview(opts) {
+    const { interaction, config } = opts;
+    const member = interaction.member;
     const perms = interaction.memberPermissions;
+    const adminRoleId = config?.adminRoleId ?? null;
+    const moderatorRoleId = config?.moderatorRoleId ?? null;
     if (!perms)
         return false;
-    return (perms.has(discord_js_1.PermissionFlagsBits.Administrator) ||
-        perms.has(discord_js_1.PermissionFlagsBits.ManageGuild) ||
-        perms.has(discord_js_1.PermissionFlagsBits.ModerateMembers) ||
-        perms.has(discord_js_1.PermissionFlagsBits.ManageRoles));
+    if (perms.has(discord_js_1.PermissionFlagsBits.Administrator) || perms.has(discord_js_1.PermissionFlagsBits.ManageGuild))
+        return true;
+    if (adminRoleId && member.roles.cache.has(adminRoleId))
+        return true;
+    if (moderatorRoleId && member.roles.cache.has(moderatorRoleId))
+        return true;
+    return false;
 }
 function findSettlement(guildState, input) {
     const byId = guildState?.settlements?.[input];
@@ -107,7 +114,8 @@ async function handleMayorRequestButtons(opts) {
     const requestId = parts.slice(2).join(":");
     if (!requestId)
         return;
-    if (!canReview(interaction)) {
+    const gs = store.get().guilds[interaction.guildId];
+    if (!canReview({ interaction, config: gs?.config })) {
         await interaction.reply({
             content: "You don't have permission to approve/deny mayor requests.",
             flags: v10_1.MessageFlags.Ephemeral,

@@ -17,10 +17,31 @@ export function isAdmin(interaction: ChatInputCommandInteraction<"cached">) {
   );
 }
 
-export function canReviewMayorRequests(interaction: ChatInputCommandInteraction<"cached">) {
+export function isStaffMember(
+  member: GuildMember,
+  config?: { adminRoleId?: string | null; moderatorRoleId?: string | null },
+) {
+  const perms = member.permissions;
+  if (perms.has(PermissionFlagsBits.Administrator) || perms.has(PermissionFlagsBits.ManageGuild)) return true;
+  const adminRoleId = config?.adminRoleId ?? null;
+  const moderatorRoleId = config?.moderatorRoleId ?? null;
+  if (adminRoleId && member.roles.cache.has(adminRoleId)) return true;
+  if (moderatorRoleId && member.roles.cache.has(moderatorRoleId)) return true;
+  return false;
+}
+
+export function canReviewMayorRequests(
+  interaction: ChatInputCommandInteraction<"cached">,
+  config?: { adminRoleId?: string | null; moderatorRoleId?: string | null },
+) {
+  if (isAdmin(interaction)) return true;
+  const adminRoleId = config?.adminRoleId ?? null;
+  const moderatorRoleId = config?.moderatorRoleId ?? null;
+  const member = interaction.member;
+  if (!member) return false;
+  if (adminRoleId && member.roles.cache.has(adminRoleId)) return true;
+  if (moderatorRoleId && member.roles.cache.has(moderatorRoleId)) return true;
   return (
-    interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) ||
-    interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild) ||
     interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers) ||
     interaction.memberPermissions?.has(PermissionFlagsBits.ManageRoles) ||
     false

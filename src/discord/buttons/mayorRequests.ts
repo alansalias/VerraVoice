@@ -32,15 +32,17 @@ function disableReviewButtons(requestId: string) {
   );
 }
 
-function canReview(interaction: ButtonInteraction<"cached">) {
+function canReview(opts: { interaction: ButtonInteraction<"cached">; config?: { adminRoleId?: string | null; moderatorRoleId?: string | null } }) {
+  const { interaction, config } = opts;
+  const member = interaction.member;
   const perms = interaction.memberPermissions;
+  const adminRoleId = config?.adminRoleId ?? null;
+  const moderatorRoleId = config?.moderatorRoleId ?? null;
   if (!perms) return false;
-  return (
-    perms.has(PermissionFlagsBits.Administrator) ||
-    perms.has(PermissionFlagsBits.ManageGuild) ||
-    perms.has(PermissionFlagsBits.ModerateMembers) ||
-    perms.has(PermissionFlagsBits.ManageRoles)
-  );
+  if (perms.has(PermissionFlagsBits.Administrator) || perms.has(PermissionFlagsBits.ManageGuild)) return true;
+  if (adminRoleId && member.roles.cache.has(adminRoleId)) return true;
+  if (moderatorRoleId && member.roles.cache.has(moderatorRoleId)) return true;
+  return false;
 }
 
 function findSettlement(guildState: any, input: string): Settlement | null {
@@ -123,7 +125,8 @@ export async function handleMayorRequestButtons(opts: {
   const requestId = parts.slice(2).join(":");
   if (!requestId) return;
 
-  if (!canReview(interaction)) {
+  const gs = store.get().guilds[interaction.guildId];
+  if (!canReview({ interaction, config: gs?.config })) {
     await interaction.reply({
       content: "You don't have permission to approve/deny mayor requests.",
       flags: MessageFlags.Ephemeral,
