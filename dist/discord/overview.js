@@ -22,7 +22,9 @@ function buildOverviewEmbed(guild, settlements) {
         .map((s) => {
         const mayor = s.mayorUserId ? `<@${s.mayorUserId}>` : "-";
         const mayorGuild = s.mayorGuildName?.trim() ? ` (Guild: **${s.mayorGuildName.trim()}**)` : "";
-        return `**${s.name}** - tier **${s.tier}** (${(0, tiers_1.tierName)(s.tier)}) - mayor ${mayor}${mayorGuild}`;
+        const link = s.channelId ? `https://discord.com/channels/${guild.id}/${s.channelId}` : null;
+        const namePart = link ? `[${s.name}](${link})` : `**${s.name}**`;
+        return `${namePart} - Tier **${s.tier}** (${(0, tiers_1.tierName)(s.tier)}) - Mayor ${mayor}${mayorGuild}`;
     });
     return new discord_js_1.EmbedBuilder()
         .setTitle(`${guild.name} - Server Overview`)

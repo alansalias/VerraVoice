@@ -22,7 +22,9 @@ function buildOverviewEmbed(guild: Guild, settlements: Settlement[]) {
     .map((s) => {
       const mayor = s.mayorUserId ? `<@${s.mayorUserId}>` : "-";
       const mayorGuild = s.mayorGuildName?.trim() ? ` (Guild: **${s.mayorGuildName.trim()}**)` : "";
-      return `**${s.name}** - tier **${s.tier}** (${tierName(s.tier)}) - mayor ${mayor}${mayorGuild}`;
+      const link = s.channelId ? `https://discord.com/channels/${guild.id}/${s.channelId}` : null;
+      const namePart = link ? `[${s.name}](${link})` : `**${s.name}**`;
+      return `${namePart} - Tier **${s.tier}** (${tierName(s.tier)}) - Mayor ${mayor}${mayorGuild}`;
     });
 
   return new EmbedBuilder()
