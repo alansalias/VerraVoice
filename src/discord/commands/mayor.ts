@@ -68,6 +68,9 @@ async function setMayorRole(opts: {
       if (mayorAggregateRoleId && !newMember.roles.cache.has(mayorAggregateRoleId)) {
         await newMember.roles.add(mayorAggregateRoleId).catch(() => null);
       }
+      if (mayorAggregateRoleId) {
+        await syncMayorAggregateForMember({ member: newMember, mayorAggregateRoleId, settlementMayorRoleIds }).catch(() => null);
+      }
     }
   }
 
