@@ -107,6 +107,13 @@ const handleMayor = async ({ interaction, store }) => {
         return;
     }
     if (sub === "claim") {
+        if (guildState && Object.values(guildState.settlements ?? {}).some((s) => s.mayorUserId === interaction.user.id)) {
+            await interaction.reply({
+                content: "You are already a verified mayor. Renounce your current mayorship before requesting another.",
+                flags: v10_1.MessageFlags.Ephemeral,
+            });
+            return;
+        }
         const settlementInput = interaction.options.getString("settlement", true);
         const settlement = findSettlement(guildState, settlementInput);
         if (!settlement) {
