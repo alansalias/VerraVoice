@@ -7,7 +7,6 @@ const ids_1 = require("../../utils/ids");
 const settlementCard_1 = require("../embeds/settlementCard");
 const overview_1 = require("../overview");
 const permissions_1 = require("../permissions");
-const moderationRoles_1 = require("../moderationRoles");
 const mayorAggregate_1 = require("../mayorAggregate");
 const mayorDm_1 = require("../mayorDm");
 const mayorTerm_1 = require("../mayorTerm");
@@ -174,7 +173,6 @@ const handleMayor = async ({ interaction, store }) => {
         const modPingRoleIds = Array.from(new Set([
             ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
             ...(config?.adminRoleId ? [config.adminRoleId] : []),
-            ...(0, moderationRoles_1.moderatorRoleIds)(guild),
         ].filter(Boolean)));
         const pingContent = modPingRoleIds.length ? modPingRoleIds.map((id) => `<@&${id}>`).join(" ") : undefined;
         await chan

@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleMayorProofDmMessage = handleMayorProofDmMessage;
 const discord_js_1 = require("discord.js");
-const moderationRoles_1 = require("../moderationRoles");
 function isImageAttachment(att) {
     if (att.contentType?.startsWith("image/"))
         return true;
@@ -116,7 +115,6 @@ async function handleMayorProofDmMessage(opts) {
     const modPingRoleIds = Array.from(new Set([
         ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
         ...(config?.adminRoleId ? [config.adminRoleId] : []),
-        ...(0, moderationRoles_1.moderatorRoleIds)(guild),
     ].filter(Boolean)));
     const pingContent = modPingRoleIds.length ? modPingRoleIds.map((id) => `<@&${id}>`).join(" ") : undefined;
     await chan

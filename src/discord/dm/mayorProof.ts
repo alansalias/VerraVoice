@@ -138,7 +138,6 @@ export async function handleMayorProofDmMessage(opts: { message: Message; store:
       [
         ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
         ...(config?.adminRoleId ? [config.adminRoleId] : []),
-        ...moderatorRoleIds(guild),
       ].filter(Boolean),
     ),
   );

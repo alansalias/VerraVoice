@@ -267,7 +267,6 @@ export async function handleRoleRequestModal(opts: {
           [
             ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
             ...(config?.adminRoleId ? [config.adminRoleId] : []),
-            ...moderatorRoleIds(interaction.guild),
           ].filter(Boolean),
         ),
       );

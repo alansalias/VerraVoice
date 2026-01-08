@@ -202,7 +202,6 @@ export const handleMayor: CommandHandler = async ({ interaction, store }) => {
         [
           ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
           ...(config?.adminRoleId ? [config.adminRoleId] : []),
-          ...moderatorRoleIds(guild),
         ].filter(Boolean),
       ),
     );

@@ -6,7 +6,6 @@ const discord_js_1 = require("discord.js");
 const v10_1 = require("discord-api-types/v10");
 const guildRoles_1 = require("../guildRoles");
 const ids_1 = require("../../utils/ids");
-const moderationRoles_1 = require("../moderationRoles");
 function canReview(opts) {
     const { interaction, config } = opts;
     const member = interaction.member;
@@ -218,7 +217,6 @@ async function handleRoleRequestModal(opts) {
             const modPingRoleIds = Array.from(new Set([
                 ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
                 ...(config?.adminRoleId ? [config.adminRoleId] : []),
-                ...(0, moderationRoles_1.moderatorRoleIds)(interaction.guild),
             ].filter(Boolean)));
             const pingContent = modPingRoleIds.length ? modPingRoleIds.map((id) => `<@&${id}>`).join(" ") : undefined;
             await chan
