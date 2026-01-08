@@ -262,6 +262,13 @@ const handleMayor = async ({ interaction, store }) => {
             await updateSettlementCard(interaction, updated);
         await (0, overview_1.upsertGuildOverview)(guild, store);
         await (0, mayorDm_1.dmMayorWelcome)({ guild, store, mayorUserId: req.requesterUserId, settlementId: settlement.id });
+        const aggregateRoleId = await (0, mayorAggregate_1.getOrCreateMayorAggregateRoleId)(store, guild);
+        if (aggregateRoleId) {
+            const newMayorMember = await guild.members.fetch(req.requesterUserId).catch(() => null);
+            if (newMayorMember && !newMayorMember.roles.cache.has(aggregateRoleId)) {
+                await newMayorMember.roles.add(aggregateRoleId).catch(() => null);
+            }
+        }
         const announcementsChannelId = store.get().guilds[guild.id]?.config?.announcementsChannelId;
         if (announcementsChannelId) {
             const chan = await guild.channels.fetch(announcementsChannelId).catch(() => null);
@@ -310,6 +317,13 @@ const handleMayor = async ({ interaction, store }) => {
             await updateSettlementCard(interaction, updated);
         await (0, overview_1.upsertGuildOverview)(guild, store);
         await (0, mayorDm_1.dmMayorWelcome)({ guild, store, mayorUserId: user.id, settlementId: settlement.id });
+        const aggregateRoleId = await (0, mayorAggregate_1.getOrCreateMayorAggregateRoleId)(store, guild);
+        if (aggregateRoleId) {
+            const member = await guild.members.fetch(user.id).catch(() => null);
+            if (member && !member.roles.cache.has(aggregateRoleId)) {
+                await member.roles.add(aggregateRoleId).catch(() => null);
+            }
+        }
         await interaction.reply({
             content: `Mayor for **${settlement.name}** set to <@${user.id}>.`,
             flags: v10_1.MessageFlags.Ephemeral,

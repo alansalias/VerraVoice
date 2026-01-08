@@ -297,6 +297,14 @@ export const handleMayor: CommandHandler = async ({ interaction, store }) => {
     await upsertGuildOverview(guild, store);
     await dmMayorWelcome({ guild, store, mayorUserId: req.requesterUserId, settlementId: settlement.id });
 
+    const aggregateRoleId = await getOrCreateMayorAggregateRoleId(store, guild);
+    if (aggregateRoleId) {
+      const newMayorMember = await guild.members.fetch(req.requesterUserId).catch(() => null);
+      if (newMayorMember && !newMayorMember.roles.cache.has(aggregateRoleId)) {
+        await newMayorMember.roles.add(aggregateRoleId).catch(() => null);
+      }
+    }
+
     const announcementsChannelId = store.get().guilds[guild.id]?.config?.announcementsChannelId;
     if (announcementsChannelId) {
       const chan = await guild.channels.fetch(announcementsChannelId).catch(() => null);
@@ -350,6 +358,14 @@ export const handleMayor: CommandHandler = async ({ interaction, store }) => {
     if (updated) await updateSettlementCard(interaction, updated);
     await upsertGuildOverview(guild, store);
     await dmMayorWelcome({ guild, store, mayorUserId: user.id, settlementId: settlement.id });
+
+    const aggregateRoleId = await getOrCreateMayorAggregateRoleId(store, guild);
+    if (aggregateRoleId) {
+      const member = await guild.members.fetch(user.id).catch(() => null);
+      if (member && !member.roles.cache.has(aggregateRoleId)) {
+        await member.roles.add(aggregateRoleId).catch(() => null);
+      }
+    }
 
     await interaction.reply({
       content: `Mayor for **${settlement.name}** set to <@${user.id}>.`,

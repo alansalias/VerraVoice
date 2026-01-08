@@ -193,6 +193,13 @@ async function handleMayorRequestButtons(opts) {
     }
     await (0, overview_1.upsertGuildOverview)(guild, store);
     await (0, mayorDm_1.dmMayorWelcome)({ guild, store, mayorUserId: req.requesterUserId, settlementId: settlement.id });
+    const aggregateRoleId = await (0, mayorAggregate_1.getOrCreateMayorAggregateRoleId)(store, guild);
+    if (aggregateRoleId) {
+        const member = await guild.members.fetch(req.requesterUserId).catch(() => null);
+        if (member && !member.roles.cache.has(aggregateRoleId)) {
+            await member.roles.add(aggregateRoleId).catch(() => null);
+        }
+    }
     await interaction.message.edit({
         content: `Status: **Approved** by <@${interaction.user.id}>.`,
         components: [disableReviewButtons(requestId)],

@@ -217,6 +217,14 @@ export async function handleMayorRequestButtons(opts: {
   await upsertGuildOverview(guild, store);
   await dmMayorWelcome({ guild, store, mayorUserId: req.requesterUserId, settlementId: settlement.id });
 
+  const aggregateRoleId = await getOrCreateMayorAggregateRoleId(store, guild);
+  if (aggregateRoleId) {
+    const member = await guild.members.fetch(req.requesterUserId).catch(() => null);
+    if (member && !member.roles.cache.has(aggregateRoleId)) {
+      await member.roles.add(aggregateRoleId).catch(() => null);
+    }
+  }
+
   await interaction.message.edit({
     content: `Status: **Approved** by <@${interaction.user.id}>.`,
     components: [disableReviewButtons(requestId)],
