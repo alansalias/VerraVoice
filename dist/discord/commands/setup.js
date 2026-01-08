@@ -496,7 +496,7 @@ const handleSetup = async ({ interaction, store, config }) => {
     const settlementsCategoryId = await ensureCategory({ guild, desiredName: "VerraVoice", existingId: existingConfig?.settlementsCategoryId });
     const moderationCategoryId = await ensureCategory({
         guild,
-        desiredName: "VerraVoice - Moderation",
+        desiredName: "Moderators",
         existingId: existingConfig?.moderationCategoryId,
     });
     const infoCategoryId = await ensureCategory({ guild, desiredName: "Info", existingId: existingConfig?.infoCategoryId });
@@ -661,7 +661,7 @@ const handleSetup = async ({ interaction, store, config }) => {
     });
     const moderatorChatChannelId = await ensureTextChannel({
         guild,
-        desiredName: "moderator-chat",
+        desiredName: "mod-chat",
         existingId: existingConfig?.moderatorChatChannelId,
         parentId: moderationCategoryId,
         topic: "Moderator staff chat.",
