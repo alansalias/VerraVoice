@@ -3,7 +3,7 @@
 VerraVoice is a Discord bot for organizing **Ashes of Creation** communities around settlements: channels/roles per settlement, a mayor verification workflow, guild tooling, and automated announcements/reminders. This repository is published for transparency and trust (zero monetization). Most communities will use the hosted bot; self-hosting is unsupported but possible from this code.
 
 ## Invite (hosted bot)
-- Invite link: `https://discord.com/oauth2/authorize?client_id=1454530015151657247&scope=bot%20applications.commands&permissions=268520464`
+- Invite link: `https://discord.com/oauth2/authorize?client_id=1454530015151657247`
 - You need **Manage Server** (or **Administrator**) to add the bot and run initial setup.
 
 ## What it's for

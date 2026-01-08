@@ -992,12 +992,31 @@ const handleSetup = async ({ interaction, store, config }) => {
     await (0, populateCatalog_1.populateFromCatalog)({ guild, store, catalog });
     await (0, selfAssignPanel_1.upsertSelfAssignPanel)(guild, store);
     await (0, overview_1.upsertGuildOverview)(guild, store);
-    const replyHeader = cleanInstall
-        ? "Setup complete (clean install).\n- Note: clean install deletes channels/roles best-effort and is irreversible."
-        : "Setup complete (regular install).\n- Note: regular install does not delete channels; it creates missing ones and can move/update existing ones by name.";
-    const replyContent = s
-        ? `${replyHeader}\n- VerraVoice: <#${s.settlementsCategoryId}>\n- Mayor info: <#${s.mayorInfoChannelId}>\n- Overview: <#${s.overviewChannelId}>\n- Settlement updates: <#${s.announcementsChannelId}>\n- Mod requests: <#${s.requestsChannelId}>\n- Info: <#${s.infoCategoryId}>\n- Rules: <#${s.rulesChannelId}>\n- Self-assign: <#${s.selfAssignChannelId}>\n- Guild controls: <#${s.guildManagementChannelId}>\n- General: <#${s.generalCategoryId}>\n- Timezone: **${s.timezone}**`
-        : replyHeader;
+    const replyLines = (() => {
+        if (!s)
+            return ["Setup complete."];
+        const mode = cleanInstall ? "Clean install" : "Regular install";
+        const warnings = cleanInstall
+            ? ["(Clean install deletes channels/roles; history is gone.)"]
+            : [];
+        const keyLocations = [
+            `Categories/channels created and repaired: <#${s.settlementsCategoryId}>`,
+            `Mayor info + claim button: <#${s.mayorInfoChannelId}>`,
+            `Server overview (auto-updated): <#${s.overviewChannelId}>`,
+            `Settlement updates (announcements): <#${s.announcementsChannelId}>`,
+            `Requests (staff review queue): <#${s.requestsChannelId}>`,
+            `Self-assign (citizenship/view/guild requests): <#${s.selfAssignChannelId}>`,
+            `Guild controls (leaders/officers tools): <#${s.guildManagementChannelId}>`,
+        ];
+        const nextSteps = [
+            "Next: run `/status` to verify channels/roles and permissions.",
+            "Set timezone with `/setup timezone` if you haven’t.",
+            "Tell staff: approve mayor claims in the Requests channel; tell players to use Self-assign and the mayor claim button.",
+            "Mayors can update cards with `/settlement update`; guild leaders use `/ginvite` from #guild-controls.",
+        ];
+        return [`${mode} complete.`, ...warnings, "", ...keyLocations, "", ...nextSteps, `Timezone: **${s.timezone}**`];
+    })();
+    const replyContent = replyLines.join("\n");
     // Respond before deleting the channel the command was run from (otherwise Discord can return "Unknown Message").
     if (canReply) {
         await interaction

@@ -89,11 +89,16 @@ const handleStatus = async ({ interaction, store }) => {
         issues.push(`Permission gaps: ${channelChecks.join("; ")}.`);
     if (missingRoles.length)
         issues.push(`Missing roles: ${fmtList(missingRoles)}.`);
-    const summary = issues.length === 0
-        ? "All required channels/roles look present and the bot has basic permissions."
-        : issues.join("\n");
+    const hasAdmin = botMember.permissions.has(discord_js_1.PermissionFlagsBits.Administrator);
+    const baseStatus = hasAdmin
+        ? "Bot has Administrator permission."
+        : "Bot lacks Administrator; ensure it has Manage Roles/Channels/Messages/Embeds/History and is high in the role list.";
+    const summary = issues.length === 0 ? "No missing channels/roles detected." : issues.join("\n");
+    const advice = issues.length
+        ? "\nFix: rerun `/setup init` and move the bot role above the roles it must assign."
+        : "\nIf commands look off, rerun `/setup init` to repair structure.";
     await interaction.reply({
-        content: `Status for **${guild.name}**\n${summary}\n\nTimezone: **${config.timezone ?? "UTC"}**`,
+        content: `Status for **${guild.name}**\n${baseStatus}\n${summary}${advice}\nTimezone: **${config.timezone ?? "UTC"}**`,
         flags: v10_1.MessageFlags.Ephemeral,
     });
 };
