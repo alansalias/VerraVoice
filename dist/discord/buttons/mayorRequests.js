@@ -194,9 +194,11 @@ async function handleMayorRequestButtons(opts) {
     if (announcementsChannelId) {
         const chan = await guild.channels.fetch(announcementsChannelId).catch(() => null);
         if (chan && chan.type === discord_js_1.ChannelType.GuildText) {
+            const guildName = req.guildName?.trim();
+            const guildLabel = guildName ? ` (Guild: **${guildName}**)` : "";
             await chan
                 .send({
-                content: `New mayor for **${settlement.name}**: <@${req.requesterUserId}> (term ends <t:${Math.floor(termEndMs / 1000)}:D>).`,
+                content: `New mayor for **${settlement.name}**: <@${req.requesterUserId}>${guildLabel} (term ends <t:${Math.floor(termEndMs / 1000)}:D>).`,
                 allowedMentions: { parse: [] },
             })
                 .catch(() => null);
