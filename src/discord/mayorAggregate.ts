@@ -25,7 +25,16 @@ export async function ensureMayorAggregateRole(guild: Guild): Promise<string> {
 export async function getOrCreateMayorAggregateRoleId(store: StateStore, guild: Guild): Promise<string | null> {
   const gs = store.get().guilds[guild.id];
   if (!gs) return null;
-  if (gs.config.mayorAggregateRoleId) return gs.config.mayorAggregateRoleId;
+  const configuredId = gs.config.mayorAggregateRoleId;
+  if (configuredId) {
+    const role = guild.roles.cache.get(configuredId) ?? (await guild.roles.fetch(configuredId).catch(() => null));
+    if (role) {
+      if (!role.hoist) {
+        await role.setHoist(true, "VerraVoice: show mayors separately").catch(() => null);
+      }
+      return role.id;
+    }
+  }
 
   const id = await ensureMayorAggregateRole(guild);
   await store.update(async (state) => {
