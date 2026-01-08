@@ -493,7 +493,7 @@ const handleSetup = async ({ interaction, store, config }) => {
         });
     }
     const existingConfig = store.get().guilds[guild.id]?.config;
-    const settlementsCategoryId = await ensureCategory({ guild, desiredName: "VerraVoice", existingId: existingConfig?.settlementsCategoryId });
+    const settlementsCategoryId = await ensureCategory({ guild, desiredName: "Realm", existingId: existingConfig?.settlementsCategoryId });
     const moderationCategoryId = await ensureCategory({
         guild,
         desiredName: "Moderators",

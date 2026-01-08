@@ -23,7 +23,7 @@ This bot is aimed at **community server management** (not guild systems). It hel
    - Optional: enable `clean_install` to wipe the server first (best-effort deletes **all channels** + **most roles**). Requires confirmation: `confirm_clean_install: DELETE`.
 2. Players read `#mayor-requests` for the verification process.
 3. Players start a claim via the `#mayor-requests` **Start Mayor Claim** button (form), then upload proof via DM.
-4. Moderators review requests in the private `#requests` channel (under `VerraVoice - Moderation`) and approve/deny via buttons.
+4. Moderators review requests in the private `#requests` channel (under `Moderators`) and approve/deny via buttons.
 5. Players use `#self-assign` to select:
    - Their settlement citizenship (one at a time)
    - Optional read-only access to other settlements via `View <Settlement>` roles (configured by zone)
@@ -50,10 +50,10 @@ This bot is aimed at **community server management** (not guild systems). It hel
 
 ## Setup output (high level)
 `/setup init` creates:
-- `VerraVoice` (category): `#server-overview`, `#settlement-updates`, `#mayor-requests`, `#mayor-tools` (mayors only)
-- `VerraVoice` (category): `#all-mayors` (mayors only)
-- `VerraVoice - Moderation` (category): `#requests` (private)
-- `VerraVoice - Moderation` (category): `#moderator-chat` (mods/admins) and `#admin-chat` (admins only)
+- `Realm` (category): `#server-overview`, `#settlement-updates`, `#mayor-requests`, `#mayor-tools` (mayors only)
+- `Realm` (category): `#all-mayors` (mayors only)
+- `Moderators` (category): `#requests` (private)
+- `Moderators` (category): `#mod-chat` (mods/admins) and `#admin-chat` (admins only)
 - `Info` (category): `#server-announcements`, `#rules`, `#self-assign`
 - `General` (category): forums + chat channels
 - `General` (category): `#guild-leadership` (guild leaders/officers only)

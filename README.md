@@ -89,7 +89,7 @@ VerraVoice creates bot-managed categories/channels/roles to support the workflow
 
 Notes:
 - Discord forces text channel names to be lowercase and hyphenated (so `Squall's End` becomes `#squalls-end`).
-- The bot may create roles like `VerraVoice Admin` / `VerraVoice Moderator`; assign them carefully.
+- The bot may create roles like `Admin` / `Moderator`; assign them carefully.
 
 ## How it works (day-to-day)
 ### Settlement membership
