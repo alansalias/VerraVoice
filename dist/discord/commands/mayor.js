@@ -7,6 +7,7 @@ const ids_1 = require("../../utils/ids");
 const settlementCard_1 = require("../embeds/settlementCard");
 const overview_1 = require("../overview");
 const permissions_1 = require("../permissions");
+const moderationRoles_1 = require("../moderationRoles");
 const mayorAggregate_1 = require("../mayorAggregate");
 const mayorDm_1 = require("../mayorDm");
 function findSettlement(guildState, input) {
@@ -168,8 +169,16 @@ const handleMayor = async ({ interaction, store }) => {
             });
             return;
         }
+        const config = store.get().guilds[guild.id]?.config;
+        const modPingRoleIds = Array.from(new Set([
+            ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
+            ...(config?.adminRoleId ? [config.adminRoleId] : []),
+            ...(0, moderationRoles_1.moderatorRoleIds)(guild),
+        ].filter(Boolean)));
+        const pingContent = modPingRoleIds.length ? modPingRoleIds.map((id) => `<@&${id}>`).join(" ") : undefined;
         await chan
             .send({
+            content: pingContent,
             embeds: [
                 buildMayorRequestEmbed({
                     requestId,
@@ -181,7 +190,7 @@ const handleMayor = async ({ interaction, store }) => {
                 }),
             ],
             components: [buildReviewButtons(requestId)],
-            allowedMentions: { parse: [] },
+            allowedMentions: modPingRoleIds.length ? { roles: modPingRoleIds } : { parse: [] },
         })
             .catch(() => null);
         await interaction.reply({
@@ -256,7 +265,9 @@ const handleMayor = async ({ interaction, store }) => {
         if (announcementsChannelId) {
             const chan = await guild.channels.fetch(announcementsChannelId).catch(() => null);
             if (chan && chan.type === discord_js_1.ChannelType.GuildText) {
-                await chan.send(`New mayor for **${settlement.name}**: <@${req.requesterUserId}> (term ends <t:${Math.floor((now + termMs) / 1000)}:D>).`);
+                const guildName = updated?.mayorGuildName?.trim();
+                const guildLabel = guildName ? ` (Guild: **${guildName}**)` : "";
+                await chan.send(`New mayor for **${settlement.name}**: <@${req.requesterUserId}>${guildLabel} (term ends <t:${Math.floor((now + termMs) / 1000)}:D>).`);
             }
         }
         await interaction.reply({

@@ -2,6 +2,7 @@ import { Attachment, ChannelType, EmbedBuilder, Message, TextChannel } from "dis
 import { Logger } from "../../logger";
 import { MayorRequest, Settlement } from "../../state/schema";
 import { StateStore } from "../../state/store";
+import { moderatorRoleIds } from "../moderationRoles";
 
 function isImageAttachment(att: Attachment) {
   if (att.contentType?.startsWith("image/")) return true;
@@ -84,14 +85,21 @@ export async function handleMayorProofDmMessage(opts: { message: Message; store:
   const requestedId = extractRequestId(message.content ?? "");
   const chosen =
     (requestedId ? candidates.find((c) => c.request.id === requestedId) ?? null : null) ??
-    (candidates.length === 1 ? candidates[0] : null);
+    candidates[0]; // default to the most recent pending request
 
-  if (!chosen) {
-    const lines = candidates.slice(0, 10).map((c) => `- \`${c.request.id}\` (${c.settlement.name} in ${c.guildId})`);
-    await message
-      .reply(`You have multiple pending mayor claims. Reply again with the request id:\n${lines.join("\n")}`)
-      .catch(() => null);
-    return;
+  // Cancel/ignore older pending requests for this user to avoid ambiguity.
+  const toCancel = candidates.filter((c) => c.request.id !== chosen.request.id);
+  if (toCancel.length) {
+    const now = Date.now();
+    await store.update(async (state) => {
+      for (const entry of toCancel) {
+        const r = state.guilds[entry.guildId]?.mayorRequests?.[entry.request.id];
+        if (!r || r.status !== "pending") continue;
+        r.status = "canceled";
+        r.reviewedAtMs = now;
+        r.reviewedByUserId = null;
+      }
+    });
   }
 
   const { guildId, request, settlement } = chosen;
@@ -124,8 +132,21 @@ export async function handleMayorProofDmMessage(opts: { message: Message; store:
     return;
   }
 
+  const config = gs.config;
+  const modPingRoleIds = Array.from(
+    new Set(
+      [
+        ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
+        ...(config?.adminRoleId ? [config.adminRoleId] : []),
+        ...moderatorRoleIds(guild),
+      ].filter(Boolean),
+    ),
+  );
+  const pingContent = modPingRoleIds.length ? modPingRoleIds.map((id) => `<@&${id}>`).join(" ") : undefined;
+
   await (chan as TextChannel)
     .send({
+      content: pingContent,
       embeds: [
         buildMayorRequestEmbed({
           requestId: request.id,
@@ -137,13 +158,15 @@ export async function handleMayorProofDmMessage(opts: { message: Message; store:
         }),
       ],
       components: reviewButtons(request.id),
-      allowedMentions: { parse: [] },
+      allowedMentions: modPingRoleIds.length ? { roles: modPingRoleIds } : { parse: [] },
     })
     .catch(() => null);
 
   await message
     .reply(
-      `Proof received for **${settlement.name}** (request \`${request.id}\`). Your request has been sent to the moderators for review.`,
+      `Proof received for **${settlement.name}** (request \`${request.id}\`). Your request has been sent to the moderators for review.${
+        toCancel.length ? " Older pending requests were canceled automatically." : ""
+      }`,
     )
     .catch(() => null);
 }

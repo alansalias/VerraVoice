@@ -5,6 +5,7 @@ import { newId } from "../../utils/ids";
 import { buildSettlementCard } from "../embeds/settlementCard";
 import { upsertGuildOverview } from "../overview";
 import { canReviewMayorRequests, requireGuild } from "../permissions";
+import { moderatorRoleIds } from "../moderationRoles";
 import { allSettlementMayorRoleIds, getOrCreateMayorAggregateRoleId, syncMayorAggregateForMember } from "../mayorAggregate";
 import { dmMayorWelcome } from "../mayorDm";
 import { CommandHandler } from "./types";
@@ -194,8 +195,20 @@ export const handleMayor: CommandHandler = async ({ interaction, store }) => {
       });
       return;
     }
+    const config = store.get().guilds[guild.id]?.config;
+    const modPingRoleIds = Array.from(
+      new Set(
+        [
+          ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
+          ...(config?.adminRoleId ? [config.adminRoleId] : []),
+          ...moderatorRoleIds(guild),
+        ].filter(Boolean),
+      ),
+    );
+    const pingContent = modPingRoleIds.length ? modPingRoleIds.map((id) => `<@&${id}>`).join(" ") : undefined;
     await (chan as TextChannel)
       .send({
+        content: pingContent,
         embeds: [
           buildMayorRequestEmbed({
             requestId,
@@ -207,7 +220,7 @@ export const handleMayor: CommandHandler = async ({ interaction, store }) => {
           }),
         ],
         components: [buildReviewButtons(requestId)],
-        allowedMentions: { parse: [] },
+        allowedMentions: modPingRoleIds.length ? { roles: modPingRoleIds } : { parse: [] },
       })
       .catch(() => null);
 
@@ -287,8 +300,10 @@ export const handleMayor: CommandHandler = async ({ interaction, store }) => {
     if (announcementsChannelId) {
       const chan = await guild.channels.fetch(announcementsChannelId).catch(() => null);
       if (chan && chan.type === ChannelType.GuildText) {
+        const guildName = updated?.mayorGuildName?.trim();
+        const guildLabel = guildName ? ` (Guild: **${guildName}**)` : "";
         await (chan as TextChannel).send(
-          `New mayor for **${settlement.name}**: <@${req.requesterUserId}> (term ends <t:${Math.floor((now + termMs) / 1000)}:D>).`,
+          `New mayor for **${settlement.name}**: <@${req.requesterUserId}>${guildLabel} (term ends <t:${Math.floor((now + termMs) / 1000)}:D>).`,
         );
       }
     }

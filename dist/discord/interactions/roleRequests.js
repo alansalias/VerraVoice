@@ -6,6 +6,7 @@ const discord_js_1 = require("discord.js");
 const v10_1 = require("discord-api-types/v10");
 const guildRoles_1 = require("../guildRoles");
 const ids_1 = require("../../utils/ids");
+const moderationRoles_1 = require("../moderationRoles");
 function canReview(interaction) {
     const perms = interaction.memberPermissions;
     if (!perms)
@@ -206,11 +207,19 @@ async function handleRoleRequestModal(opts) {
     if (requestsChannelId) {
         const chan = await interaction.guild.channels.fetch(requestsChannelId).catch(() => null);
         if (chan && chan.type === discord_js_1.ChannelType.GuildText) {
+            const config = store.get().guilds[interaction.guildId]?.config;
+            const modPingRoleIds = Array.from(new Set([
+                ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
+                ...(config?.adminRoleId ? [config.adminRoleId] : []),
+                ...(0, moderationRoles_1.moderatorRoleIds)(interaction.guild),
+            ].filter(Boolean)));
+            const pingContent = modPingRoleIds.length ? modPingRoleIds.map((id) => `<@&${id}>`).join(" ") : undefined;
             await chan
                 .send({
+                content: pingContent,
                 embeds: [buildRoleRequestEmbed({ requestId, type, requesterUserId: interaction.user.id, guildName, note })],
                 components: [reviewButtons(requestId)],
-                allowedMentions: { parse: [] },
+                allowedMentions: modPingRoleIds.length ? { roles: modPingRoleIds } : { parse: [] },
             })
                 .catch(() => null);
         }

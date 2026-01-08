@@ -59,7 +59,7 @@ export const handleWar: CommandHandler = async ({ interaction, store }) => {
       });
       return;
     }
-    const startsAtInput = interaction.options.getString("starts_at", true);
+    const startsAtInput = interaction.options.getString("starts_at", true).trim();
     const title = interaction.options.getString("title", true).trim();
     const description = interaction.options.getString("description", false);
     const mentionRole = interaction.options.getRole("mention_role", false);
@@ -69,7 +69,7 @@ export const handleWar: CommandHandler = async ({ interaction, store }) => {
     const dt = parseWhen(startsAtInput, timezone);
     if (!dt) {
       await interaction.reply({
-        content: `Couldn't parse time. Use e.g. \`2026-02-10 20:00\` (${timezone}) or ISO like \`2026-02-10T20:00\`.`,
+        content: `Couldn't parse time.\nUse \`YYYY-MM-DD HH:mm\` in your server timezone (**${timezone}**) e.g. \`2026-02-10 20:00\`.\nAlso accepted: ISO \`2026-02-10T20:00\` (24h).`,
         flags: MessageFlags.Ephemeral,
       });
       return;

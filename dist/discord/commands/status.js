@@ -43,11 +43,13 @@ const handleStatus = async ({ interaction, store }) => {
         { id: config.guildManagementChannelId, label: "Guild controls channel" },
     ];
     for (const c of channelsToCheck) {
-        if (!c.id)
+        if (!c.id) {
+            missingChannels.push(`${c.label} (not configured)`);
             continue;
+        }
         const chan = await guild.channels.fetch(c.id).catch(() => null);
         if (!chan) {
-            missingChannels.push(c.label);
+            missingChannels.push(`${c.label} (missing/deleted)`);
             continue;
         }
         const perms = chan.permissionsFor(botMember);
@@ -74,11 +76,13 @@ const handleStatus = async ({ interaction, store }) => {
         { id: config.guildOfficerRoleId, label: "Guild Officer role" },
     ];
     for (const r of rolesToCheck) {
-        if (!r.id)
+        if (!r.id) {
+            missingRoles.push(`${r.label} (not configured)`);
             continue;
+        }
         const role = guild.roles.cache.get(r.id) ?? (await guild.roles.fetch(r.id).catch(() => null));
         if (!role)
-            missingRoles.push(r.label);
+            missingRoles.push(`${r.label} (missing/deleted)`);
     }
     const issues = [];
     if (!state?.config?.settlementsCategoryId)

@@ -18,6 +18,7 @@ import { ensureGuildRoleForName } from "../guildRoles";
 import { RoleRequest } from "../../state/schema";
 import { StateStore } from "../../state/store";
 import { newId } from "../../utils/ids";
+import { moderatorRoleIds } from "../moderationRoles";
 
 function canReview(interaction: ButtonInteraction<"cached">) {
   const perms = interaction.memberPermissions;
@@ -258,11 +259,23 @@ export async function handleRoleRequestModal(opts: {
   if (requestsChannelId) {
     const chan = await interaction.guild.channels.fetch(requestsChannelId).catch(() => null);
     if (chan && chan.type === ChannelType.GuildText) {
+      const config = store.get().guilds[interaction.guildId]?.config;
+      const modPingRoleIds = Array.from(
+        new Set(
+          [
+            ...(config?.moderatorRoleId ? [config.moderatorRoleId] : []),
+            ...(config?.adminRoleId ? [config.adminRoleId] : []),
+            ...moderatorRoleIds(interaction.guild),
+          ].filter(Boolean),
+        ),
+      );
+      const pingContent = modPingRoleIds.length ? modPingRoleIds.map((id) => `<@&${id}>`).join(" ") : undefined;
       await (chan as TextChannel)
         .send({
+          content: pingContent,
           embeds: [buildRoleRequestEmbed({ requestId, type, requesterUserId: interaction.user.id, guildName, note })],
           components: [reviewButtons(requestId)],
-          allowedMentions: { parse: [] },
+          allowedMentions: modPingRoleIds.length ? { roles: modPingRoleIds } : { parse: [] },
         })
         .catch(() => null);
     }
