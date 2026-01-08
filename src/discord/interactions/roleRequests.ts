@@ -151,7 +151,12 @@ export async function handleRoleRequestButtons(opts: {
   }
 
   const roleName = roleLabel(req.type);
-  const role = interaction.guild.roles.cache.find((r) => r.name.toLowerCase() === roleName.toLowerCase()) ?? null;
+  const config = gs?.config;
+  const configuredRoleId = req.type === "guild_leader" ? config?.guildLeaderRoleId : config?.guildOfficerRoleId;
+  const role =
+    (configuredRoleId ? interaction.guild.roles.cache.get(configuredRoleId) ?? (await interaction.guild.roles.fetch(configuredRoleId).catch(() => null)) : null) ??
+    interaction.guild.roles.cache.find((r) => r.name.toLowerCase() === roleName.toLowerCase()) ??
+    null;
   if (!role) {
     await interaction.followUp({
       content: `Missing role \`${roleName}\`. Run \`/setup init\` again.`,
