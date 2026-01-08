@@ -36,9 +36,18 @@ export function mayorClaimComponents() {
 }
 
 export async function handleMayorClaimButtons(opts: { interaction: ButtonInteraction; store: StateStore; logger: Logger }) {
-  const { interaction } = opts;
+  const { interaction, store } = opts;
   if (!interaction.inCachedGuild()) return;
   if (interaction.customId !== "mayorclaim:open") return;
+
+  const gs = store.get().guilds[interaction.guildId];
+  if (gs && Object.values(gs.settlements ?? {}).some((s: Settlement) => s.mayorUserId === interaction.user.id)) {
+    await interaction.reply({
+      content: "You are already a verified mayor. Renounce your current mayorship before requesting another.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
 
   const modal = new ModalBuilder().setCustomId("mayorclaimmodal").setTitle("Mayor Claim Request");
 
@@ -108,6 +117,14 @@ export async function handleMayorClaimModal(opts: { interaction: ModalSubmitInte
   if (!gs) {
     await interaction.reply({
       content: "Server is not initialized. Ask an admin to run `/setup init`.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  if (Object.values(gs.settlements ?? {}).some((s: Settlement) => s.mayorUserId === interaction.user.id)) {
+    await interaction.reply({
+      content: "You are already a verified mayor. Renounce your current mayorship before requesting another.",
       flags: MessageFlags.Ephemeral,
     });
     return;

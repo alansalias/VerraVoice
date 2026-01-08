@@ -24,11 +24,19 @@ function mayorClaimComponents() {
     return [startMayorClaimButton()];
 }
 async function handleMayorClaimButtons(opts) {
-    const { interaction } = opts;
+    const { interaction, store } = opts;
     if (!interaction.inCachedGuild())
         return;
     if (interaction.customId !== "mayorclaim:open")
         return;
+    const gs = store.get().guilds[interaction.guildId];
+    if (gs && Object.values(gs.settlements ?? {}).some((s) => s.mayorUserId === interaction.user.id)) {
+        await interaction.reply({
+            content: "You are already a verified mayor. Renounce your current mayorship before requesting another.",
+            flags: v10_1.MessageFlags.Ephemeral,
+        });
+        return;
+    }
     const modal = new discord_js_1.ModalBuilder().setCustomId("mayorclaimmodal").setTitle("Mayor Claim Request");
     const settlement = new discord_js_1.TextInputBuilder()
         .setCustomId("settlement")
@@ -80,6 +88,13 @@ async function handleMayorClaimModal(opts) {
     if (!gs) {
         await interaction.reply({
             content: "Server is not initialized. Ask an admin to run `/setup init`.",
+            flags: v10_1.MessageFlags.Ephemeral,
+        });
+        return;
+    }
+    if (Object.values(gs.settlements ?? {}).some((s) => s.mayorUserId === interaction.user.id)) {
+        await interaction.reply({
+            content: "You are already a verified mayor. Renounce your current mayorship before requesting another.",
             flags: v10_1.MessageFlags.Ephemeral,
         });
         return;
