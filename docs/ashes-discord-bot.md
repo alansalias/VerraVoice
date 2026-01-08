@@ -50,7 +50,7 @@ This bot is aimed at **community server management** (not guild systems). It hel
 
 ## Setup output (high level)
 `/setup init` creates:
-- `VerraVoice` (category): `#server-overview`, `#settlement-updates`, `#mayor-requests`, `#mayor-how-to` (mayors only)
+- `VerraVoice` (category): `#server-overview`, `#settlement-updates`, `#mayor-requests`, `#mayor-tools` (mayors only)
 - `VerraVoice` (category): `#all-mayors` (mayors only)
 - `VerraVoice - Moderation` (category): `#requests` (private)
 - `VerraVoice - Moderation` (category): `#moderator-chat` (mods/admins) and `#admin-chat` (admins only)

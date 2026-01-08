@@ -560,7 +560,7 @@ const handleSetup = async ({ interaction, store, config }) => {
     });
     const mayorHowToChannelId = await ensureTextChannel({
         guild,
-        desiredName: "mayor-how-to",
+        desiredName: "mayor-tools",
         existingId: existingConfig?.mayorHowToChannelId,
         parentId: settlementsCategoryId,
         topic: "Mayor-only guide to VerraVoice tools (read-only).",
