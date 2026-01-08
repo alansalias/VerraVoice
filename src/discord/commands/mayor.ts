@@ -63,7 +63,12 @@ async function setMayorRole(opts: {
 
   if (newMayorUserId) {
     newMember = await guild.members.fetch(newMayorUserId).catch(() => null);
-    if (newMember) await newMember.roles.add(roleId).catch(() => null);
+    if (newMember) {
+      await newMember.roles.add(roleId).catch(() => null);
+      if (mayorAggregateRoleId && !newMember.roles.cache.has(mayorAggregateRoleId)) {
+        await newMember.roles.add(mayorAggregateRoleId).catch(() => null);
+      }
+    }
   }
 
   if (mayorAggregateRoleId) {
