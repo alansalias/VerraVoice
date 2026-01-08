@@ -75,7 +75,8 @@ function modalId(action, settlementId) {
 function mayorDashboardComponents() {
     const row1 = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("mayordash:status").setLabel("Update Status").setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder().setCustomId("mayordash:tier").setLabel("Set Tier").setStyle(discord_js_1.ButtonStyle.Secondary), new discord_js_1.ButtonBuilder().setCustomId("mayordash:announce").setLabel("Announce").setStyle(discord_js_1.ButtonStyle.Success));
     const row2 = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("mayordash:election").setLabel("Set Election").setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder().setCustomId("mayordash:war").setLabel("Declare War").setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder().setCustomId("mayordash:siege").setLabel("Declare Siege").setStyle(discord_js_1.ButtonStyle.Danger), new discord_js_1.ButtonBuilder().setCustomId("mayordash:destroyed").setLabel("Declare Destroyed").setStyle(discord_js_1.ButtonStyle.Secondary));
-    return [row1, row2];
+    const row3 = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder().setCustomId("mayordash:renounce").setLabel("Renounce Mayorship").setStyle(discord_js_1.ButtonStyle.Danger));
+    return [row1, row2, row3];
 }
 async function upsertSettlementStatusCard(opts) {
     if (!opts.settlement.channelId)
@@ -295,6 +296,18 @@ async function showModalForAction(interaction, action, settlementId, store) {
             .setRequired(false)
             .setMaxLength(900);
         modal.addComponents(new discord_js_1.ActionRowBuilder().addComponents(reason));
+        await interaction.showModal(modal);
+        return;
+    }
+    if (action === "renounce") {
+        const modal = new discord_js_1.ModalBuilder().setCustomId(modalId(action, settlementId)).setTitle(`Renounce Mayorship - ${titleBase}`);
+        const confirm = new discord_js_1.TextInputBuilder()
+            .setCustomId("confirm")
+            .setLabel('Type "RENOUNCE" to confirm')
+            .setStyle(discord_js_1.TextInputStyle.Short)
+            .setRequired(true)
+            .setMaxLength(10);
+        modal.addComponents(new discord_js_1.ActionRowBuilder().addComponents(confirm));
         await interaction.showModal(modal);
         return;
     }
@@ -718,6 +731,60 @@ async function handleMayorDashboardModal(opts) {
         }
         await interaction.reply({
             content: `Marked **${settlement.name}** as destroyed (tier reset to 0).`,
+            flags: v10_1.MessageFlags.Ephemeral,
+        });
+        return;
+    }
+    if (action === "renounce") {
+        const confirm = interaction.fields.getTextInputValue("confirm").trim();
+        if (confirm !== "RENOUNCE") {
+            await interaction.reply({ content: 'Renounce cancelled (type "RENOUNCE" to confirm).', flags: v10_1.MessageFlags.Ephemeral });
+            return;
+        }
+        if (!settlement.mayorUserId) {
+            await interaction.reply({ content: "This settlement does not currently have a mayor.", flags: v10_1.MessageFlags.Ephemeral });
+            return;
+        }
+        if (settlement.mayorUserId !== interaction.user.id) {
+            await interaction.reply({ content: "Only the current mayor can renounce this settlement.", flags: v10_1.MessageFlags.Ephemeral });
+            return;
+        }
+        if (settlement.mayorRoleId) {
+            const member = await guild.members.fetch(settlement.mayorUserId).catch(() => null);
+            if (member) {
+                await member.roles.remove(settlement.mayorRoleId).catch(() => null);
+                const mayorAggregateRoleId = await (0, mayorAggregate_1.getOrCreateMayorAggregateRoleId)(store, guild);
+                const settlementMayorRoleIds = (0, mayorAggregate_1.allSettlementMayorRoleIds)(store, guild.id);
+                if (mayorAggregateRoleId) {
+                    await (0, mayorAggregate_1.syncMayorAggregateForMember)({ member, mayorAggregateRoleId, settlementMayorRoleIds });
+                }
+            }
+        }
+        await store.update(async (state) => {
+            const s = state.guilds[guild.id]?.settlements?.[settlement.id];
+            if (!s)
+                return;
+            s.mayorUserId = null;
+            s.mayorGuildName = null;
+            s.mayorSinceMs = null;
+            s.mayorUntilMs = null;
+            s.updatedAtMs = now;
+        });
+        const updated = store.get().guilds[guild.id]?.settlements?.[settlement.id];
+        if (updated)
+            await upsertSettlementStatusCard({ guild, settlement: updated, store });
+        await (0, overview_1.upsertGuildOverview)(guild, store);
+        const announce = await ensureCanAnnounce(gs, guild);
+        if (announce) {
+            await announce
+                .send({
+                content: `Mayor of **${settlement.name}** has renounced. The mayorship is now open.`,
+                allowedMentions: { parse: [] },
+            })
+                .catch(() => null);
+        }
+        await interaction.reply({
+            content: `You have renounced mayorship of **${settlement.name}**.`,
             flags: v10_1.MessageFlags.Ephemeral,
         });
         return;
