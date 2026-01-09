@@ -32,7 +32,7 @@ This bot is aimed at **community server management** (not guild systems). It hel
 6. Admin adds settlements via `/settlement add` (optional; only needed if you don't want the built-in catalog).
 7. Mayors use `/settlement update` to keep their status card current.
 8. Mods/mayors set election and war times; the bot posts reminders automatically.
-9. The bot maintains a `server-overview` embed with all settlements/tier/mayor.
+9. The bot maintains a `realm-overview` embed with all settlements/tier/mayor.
 10. Each zone category has a `#mayors-<zone>` channel: citizens can read, only mayors can post.
 11. Verified mayors also receive the global hoisted `Mayor` role (so online mayors show separately in the member list).
 12. The overview includes each mayor's in-game guild name (captured from the mayor claim request when available).
@@ -50,7 +50,7 @@ This bot is aimed at **community server management** (not guild systems). It hel
 
 ## Setup output (high level)
 `/setup init` creates:
-- `Realm` (category): `#server-overview`, `#settlement-updates`, `#mayor-requests`, `#mayor-tools` (mayors only)
+- `Realm` (category): `#realm-overview`, `#settlement-updates`, `#mayor-requests`, `#mayor-tools` (mayors only)
 - `Realm` (category): `#all-mayors` (mayors only)
 - `Moderators` (category): `#requests` (private)
 - `Moderators` (category): `#mod-chat` (mods/admins) and `#admin-chat` (admins only)

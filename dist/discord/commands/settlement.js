@@ -347,9 +347,24 @@ const handleSettlement = async ({ interaction, store }) => {
             return;
         }
         const member = interaction.member;
+        const isCurrentMayor = settlement.mayorUserId === interaction.user.id;
+        if (!admin && !isCurrentMayor) {
+            await interaction.reply({
+                content: "Only the current mayor of this settlement can announce here.",
+                flags: v10_1.MessageFlags.Ephemeral,
+            });
+            return;
+        }
         if (!(0, permissions_1.canManageSettlement)(member, settlement, admin)) {
             await interaction.reply({
                 content: "Only the settlement mayor (or an admin) can announce for this settlement.",
+                flags: v10_1.MessageFlags.Ephemeral,
+            });
+            return;
+        }
+        if (!settlement.channelId && !admin) {
+            await interaction.reply({
+                content: "This settlement does not have a channel yet. Ask an admin to run `/setup init`.",
                 flags: v10_1.MessageFlags.Ephemeral,
             });
             return;

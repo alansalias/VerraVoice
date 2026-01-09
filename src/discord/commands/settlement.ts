@@ -372,9 +372,25 @@ export const handleSettlement: CommandHandler = async ({ interaction, store }) =
     }
 
     const member = interaction.member;
+    const isCurrentMayor = settlement.mayorUserId === interaction.user.id;
+    if (!admin && !isCurrentMayor) {
+      await interaction.reply({
+        content: "Only the current mayor of this settlement can announce here.",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     if (!canManageSettlement(member, settlement, admin)) {
       await interaction.reply({
         content: "Only the settlement mayor (or an admin) can announce for this settlement.",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    if (!settlement.channelId && !admin) {
+      await interaction.reply({
+        content: "This settlement does not have a channel yet. Ask an admin to run `/setup init`.",
         flags: MessageFlags.Ephemeral,
       });
       return;

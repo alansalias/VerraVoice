@@ -640,7 +640,7 @@ export const handleSetup: CommandHandler = async ({ interaction, store, config }
 
   const overviewChannelId = await ensureTextChannel({
     guild,
-    desiredName: "server-overview",
+    desiredName: "realm-overview",
     existingId: existingConfig?.overviewChannelId,
     parentId: settlementsCategoryId,
     topic: "Read-only overview of all settlements (tier + mayor).",

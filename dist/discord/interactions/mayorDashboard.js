@@ -408,6 +408,13 @@ async function handleMayorDashboardModal(opts) {
         return;
     }
     if (action === "announce") {
+        if (!admin && settlement.mayorUserId !== interaction.user.id) {
+            await interaction.reply({
+                content: "Only the current mayor of this settlement can announce here.",
+                flags: v10_1.MessageFlags.Ephemeral,
+            });
+            return;
+        }
         const message = interaction.fields.getTextInputValue("message").trim();
         const pingRaw = (interaction.fields.getTextInputValue("ping") ?? "").trim().toLowerCase();
         const pingCitizens = pingRaw ? ["y", "yes", "true", "1"].includes(pingRaw) : true;

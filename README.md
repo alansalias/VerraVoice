@@ -26,7 +26,7 @@ If your server wants structure around settlements (who's mayor, who are citizens
 - Settlement structure in minutes  
   - Auto-creates categories, channels, and roles per settlement (mayor/citizen/view) plus zone-level channels.  
   - Enforces **one mayor per settlement** and keeps pinned settlement status cards updated.  
-  - Global `#server-overview` stays fresh automatically.
+- Global `#realm-overview` stays fresh automatically.
 - Mayor verification without spreadsheets  
   - Users submit a claim + proof (proof via DM).  
   - Staff approve/deny with buttons; approvals update roles, status cards, and overview automatically.
