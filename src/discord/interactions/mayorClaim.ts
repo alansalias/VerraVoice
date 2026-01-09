@@ -178,7 +178,7 @@ export async function handleMayorClaimModal(opts: { interaction: ModalSubmitInte
     flags: MessageFlags.Ephemeral,
   });
 
-  await interaction.user
+  const dmSent = await interaction.user
     .send({
       embeds: [
         buildDmProofRequestEmbed({
@@ -189,5 +189,14 @@ export async function handleMayorClaimModal(opts: { interaction: ModalSubmitInte
         }),
       ],
     })
-    .catch(() => null);
+    .then(() => true)
+    .catch(() => false);
+
+  if (!dmSent) {
+    await interaction.followUp({
+      content:
+        "I couldn't DM you. Please enable **Allow direct messages from server members** in your server privacy settings, or use `/mayor claim` (with proof attached).",
+      flags: MessageFlags.Ephemeral,
+    });
+  }
 }
