@@ -15,6 +15,7 @@ import {
 import { MessageFlags } from "discord-api-types/v10";
 import { Logger } from "../../logger";
 import { ensureGuildRoleForName } from "../guildRoles";
+import { dmGuildRoleWelcome } from "../guildRoleDm";
 import { RoleRequest } from "../../state/schema";
 import { StateStore } from "../../state/store";
 import { newId } from "../../utils/ids";
@@ -199,6 +200,16 @@ export async function handleRoleRequestButtons(opts: {
     content: `Status: **Approved** by <@${interaction.user.id}>.`,
     components: [disabledReviewButtons(requestId)],
     allowedMentions: { parse: [] },
+  });
+
+  await dmGuildRoleWelcome({
+    guild: interaction.guild,
+    store,
+    requesterUserId: req.requesterUserId,
+    type: req.type,
+    guildName: req.guildName,
+    guildRoleId,
+    member,
   });
 
   if (guildRoleId && !member) {

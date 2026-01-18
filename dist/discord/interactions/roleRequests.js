@@ -5,6 +5,7 @@ exports.handleRoleRequestModal = handleRoleRequestModal;
 const discord_js_1 = require("discord.js");
 const v10_1 = require("discord-api-types/v10");
 const guildRoles_1 = require("../guildRoles");
+const guildRoleDm_1 = require("../guildRoleDm");
 const ids_1 = require("../../utils/ids");
 function canReview(opts) {
     const { interaction, config } = opts;
@@ -157,6 +158,15 @@ async function handleRoleRequestButtons(opts) {
         content: `Status: **Approved** by <@${interaction.user.id}>.`,
         components: [disabledReviewButtons(requestId)],
         allowedMentions: { parse: [] },
+    });
+    await (0, guildRoleDm_1.dmGuildRoleWelcome)({
+        guild: interaction.guild,
+        store,
+        requesterUserId: req.requesterUserId,
+        type: req.type,
+        guildName: req.guildName,
+        guildRoleId,
+        member,
     });
     if (guildRoleId && !member) {
         await interaction.followUp({
